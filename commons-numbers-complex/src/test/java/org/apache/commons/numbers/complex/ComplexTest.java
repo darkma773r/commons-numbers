@@ -17,8 +17,6 @@
 
 package org.apache.commons.numbers.complex;
 
-import java.util.List;
-
 import org.apache.commons.numbers.complex.Complex;
 import org.apache.commons.numbers.complex.ComplexUtils;
 import org.junit.Assert;
@@ -55,14 +53,14 @@ public class ComplexTest {
     private static final Complex NAN = Complex.ofCartesian(nan, nan);
 
     @Test
-    public void testConstructor() {
+    public void testOfCartesian() {
         Complex z = Complex.ofCartesian(3.0, 4.0);
         Assert.assertEquals(3.0, z.getReal(), 1.0e-5);
         Assert.assertEquals(4.0, z.getImaginary(), 1.0e-5);
     }
 
     @Test
-    public void testConstructorNaN() {
+    public void testOfCartesianNaN() {
         Complex z = Complex.ofCartesian(3.0, Double.NaN);
         Assert.assertTrue(z.isNaN());
 
@@ -71,6 +69,43 @@ public class ComplexTest {
 
         z = Complex.ofCartesian(3.0, 4.0);
         Assert.assertFalse(z.isNaN());
+    }
+
+    @Test
+    public void testOfPolar() {
+        double delta = 1e-12;
+
+        assertRealAndImaginary(1, 0, Complex.ofPolar(1, 0), delta);
+        assertRealAndImaginary(0, 0, Complex.ofPolar(0, 1), delta);
+        assertRealAndImaginary(0, 0, Complex.ofPolar(0, -1), delta);
+        assertRealAndImaginary(0, 1, Complex.ofPolar(1, pi / 2), delta);
+        assertRealAndImaginary(0, -1, Complex.ofPolar(1, -pi / 2), delta);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testOfPolarNegativeModulus() {
+        Complex.ofPolar(-1, 0);
+    }
+
+    @Test
+    public void testOfPolarNaN() {
+        Assert.assertTrue(Complex.ofPolar(nan, 1).isNaN());
+        Assert.assertTrue(Complex.ofPolar(1, nan).isNaN());
+        Assert.assertTrue(Complex.ofPolar(nan, nan).isNaN());
+    }
+
+    @Test
+    public void testOfPolarInf() {
+        Assert.assertTrue(Complex.ofPolar(1, inf).isNaN());
+        Assert.assertTrue(Complex.ofPolar(1, neginf).isNaN());
+        Assert.assertTrue(Complex.ofPolar(inf, inf).isNaN());
+        Assert.assertTrue(Complex.ofPolar(inf, neginf).isNaN());
+
+        assertRealAndImaginary(inf, inf, Complex.ofPolar(inf, pi / 4), 0);
+        assertRealAndImaginary(inf, nan, Complex.ofPolar(inf, 0), 0);
+        assertRealAndImaginary(inf, neginf, Complex.ofPolar(inf, -pi / 4), 0);
+        assertRealAndImaginary(neginf, inf, Complex.ofPolar(inf, 3 * pi / 4), 0);
+        assertRealAndImaginary(neginf, neginf, Complex.ofPolar(inf, 5 * pi / 4), 0);
     }
 
     @Test
@@ -787,5 +822,10 @@ public class ComplexTest {
         Assert.assertTrue(Double.isNaN(nanZero.getArgument()));
         Assert.assertTrue(Double.isNaN(zeroNaN.getArgument()));
         Assert.assertTrue(Double.isNaN(NAN.getArgument()));
+    }
+
+    public static void assertRealAndImaginary(double expectedReal, double expectedImaginary, Complex actual, double delta) {
+        Assert.assertEquals(expectedReal, actual.getReal(), delta);
+        Assert.assertEquals(expectedImaginary, actual.getImaginary(), delta);
     }
 }

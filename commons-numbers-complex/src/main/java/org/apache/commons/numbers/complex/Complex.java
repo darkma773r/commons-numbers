@@ -1303,7 +1303,7 @@ final public class Complex implements Serializable  {
      * @param arg {@code double} to check
      */
     private static void checkNotNegative(double arg) {
-        if (arg <= 0) {
+        if (arg < 0) {
             throw new IllegalArgumentException("Complex: Non-positive argument");
         }
     }
