@@ -22,6 +22,12 @@ import java.util.Comparator;
  */
 public abstract class DoublePrecisionContext implements Comparator<Double> {
 
+    /** Get the largest positive double value that is still considered equal
+     * to zero by this instance.
+     * @return the largest positive double value still considered equal to zero
+     */
+    public abstract double getZeroUpperBound();
+
     /** Return true if the given values should be considered equal to
      * each other.
      * @param a first value
@@ -29,6 +35,16 @@ public abstract class DoublePrecisionContext implements Comparator<Double> {
      * @return true if the given values should be considered equal
      */
     public abstract boolean equals(final double a, final double b);
+
+    /** Return true if the given value should be considered equal to
+     * zero. This is equivalent {@code context.equals(n, 0.0)} but with
+     * a most explicit method name.
+     * @param n the number to compare
+     * @return true if the argument should be considered equal to zero.
+     */
+    public boolean equalsZero(final double n) {
+        return equals(n, 0.0);
+    }
 
     /** Compare two double values. The returned value is
      * <ul>

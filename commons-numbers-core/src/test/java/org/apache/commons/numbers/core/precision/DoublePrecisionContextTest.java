@@ -9,6 +9,24 @@ public class DoublePrecisionContextTest {
     private static final double TEST_EPS = 0.5;
 
     @Test
+    public void testEqualsZero() {
+        // arrange
+        StubContext ctx = new StubContext();
+
+        // act/assert
+        Assert.assertFalse(ctx.equalsZero(-1.0));
+        Assert.assertFalse(ctx.equalsZero(-0.6));
+
+        Assert.assertTrue(ctx.equalsZero(-0.5));
+        Assert.assertTrue(ctx.equalsZero(-0.0));
+        Assert.assertTrue(ctx.equalsZero(0.0));
+        Assert.assertTrue(ctx.equalsZero(0.5));
+
+        Assert.assertFalse(ctx.equalsZero(0.6));
+        Assert.assertFalse(ctx.equalsZero(1.0));
+    }
+
+    @Test
     public void testCompare_primitive() {
         // arrange
         StubContext ctx = new StubContext();
@@ -43,6 +61,11 @@ public class DoublePrecisionContextTest {
         @Override
         public boolean equals(double a, double b) {
             return Math.abs(a - b) <= TEST_EPS;
+        }
+
+        @Override
+        public double getZeroUpperBound() {
+            return TEST_EPS;
         }
     }
 }
