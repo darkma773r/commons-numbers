@@ -19,29 +19,29 @@ package org.apache.commons.numbers.core.precision;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class DoublePrecisionContextTest {
+public class FloatPrecisionContextTest {
 
     private StubContext ctx = new StubContext();
 
     @Test
     public void testAreEqual() {
         // act/assert
-        Assert.assertTrue(ctx.areEqual(0.0, 0.0));
-        Assert.assertTrue(ctx.areEqual(1.0, 1.0));
-        Assert.assertTrue(ctx.areEqual(-1.0, -1.0));
+        Assert.assertTrue(ctx.areEqual(0f, 0f));
+        Assert.assertTrue(ctx.areEqual(1f, 1f));
+        Assert.assertTrue(ctx.areEqual(-1f, -1f));
 
-        Assert.assertFalse(ctx.areEqual(1.0, -1.0));
-        Assert.assertFalse(ctx.areEqual(1.0, Math.nextUp(1.0)));
-        Assert.assertFalse(ctx.areEqual(-1.0, Math.nextDown(1.0)));
+        Assert.assertFalse(ctx.areEqual(1f, -1f));
+        Assert.assertFalse(ctx.areEqual(1f, Math.nextUp(1f)));
+        Assert.assertFalse(ctx.areEqual(-1f, Math.nextDown(1f)));
     }
 
     @Test
     public void testIsZero() {
         // act/assert
-        Assert.assertTrue(ctx.isZero(0.0));
+        Assert.assertTrue(ctx.isZero(0f));
 
-        Assert.assertFalse(ctx.isZero(Math.nextUp(0.0)));
-        Assert.assertFalse(ctx.isZero(Math.nextDown(-0.0)));
+        Assert.assertFalse(ctx.isZero(Math.nextUp(0f)));
+        Assert.assertFalse(ctx.isZero(Math.nextDown(-0f)));
     }
 
     @Test
@@ -107,25 +107,25 @@ public class DoublePrecisionContextTest {
     @Test
     public void testCompare_wrapper() {
         // act/assert
-        Assert.assertEquals(0, ctx.compare(new Double(1), new Double(1)));
-        Assert.assertEquals(-1, ctx.compare(new Double(1), new Double(2)));
-        Assert.assertEquals(1, ctx.compare(new Double(2), new Double(1)));
+        Assert.assertEquals(0, ctx.compare(new Float(1), new Float(1)));
+        Assert.assertEquals(-1, ctx.compare(new Float(1), new Float(2)));
+        Assert.assertEquals(1, ctx.compare(new Float(2), new Float(1)));
 
-        Assert.assertEquals(0, ctx.compare(new Double(-1), new Double(-1)));
-        Assert.assertEquals(1, ctx.compare(new Double(-1), new Double(-2)));
-        Assert.assertEquals(-1, ctx.compare(new Double(-2), new Double(-1)));
+        Assert.assertEquals(0, ctx.compare(new Float(-1), new Float(-1)));
+        Assert.assertEquals(1, ctx.compare(new Float(-1), new Float(-2)));
+        Assert.assertEquals(-1, ctx.compare(new Float(-2), new Float(-1)));
     }
 
-    private static class StubContext extends DoublePrecisionContext {
+    private static class StubContext extends FloatPrecisionContext {
 
         @Override
-        public double getMaxZero() {
-            return 0.0;
+        public float getMaxZero() {
+            return 0f;
         }
 
         @Override
-        public int compare(double a, double b) {
-            return Double.compare(a, b);
+        public int compare(float a, float b) {
+            return Float.compare(a, b);
         }
     }
 }

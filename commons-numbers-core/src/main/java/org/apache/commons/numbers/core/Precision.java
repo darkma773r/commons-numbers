@@ -118,6 +118,37 @@ public class Precision {
 
     /**
      * Compares two numbers given some amount of allowed error.
+     * The returned value is
+     * <ul>
+     *  <li>
+     *   0 if  {@link #equals(float,float,float) equals(x, y, eps)},
+     *  </li>
+     *  <li>
+     *   negative if !{@link #equals(float,float,float) equals(x, y, eps)} and {@code x < y},
+     *  </li>
+     *  <li>
+     *   positive if !{@link #equals(float,float,float) equals(x, y, eps)} and {@code x > y} or
+     *   either argument is {@code NaN}.
+     *  </li>
+     * </ul>
+     *
+     * @param x First value.
+     * @param y Second value.
+     * @param eps Allowed error when checking for equality.
+     * @return 0 if the value are considered equal, -1 if the first is smaller than
+     * the second, 1 is the first is larger than the second.
+     */
+    public static int compareTo(float x, float y, float eps) {
+        if (equals(x, y, eps)) {
+            return 0;
+        } else if (x < y) {
+            return -1;
+        }
+        return 1;
+    }
+
+    /**
+     * Compares two numbers given some amount of allowed error.
      * Two float numbers are considered equal if there are {@code (maxUlps - 1)}
      * (or fewer) floating point numbers between them, i.e. two adjacent floating
      * point numbers are considered equal.

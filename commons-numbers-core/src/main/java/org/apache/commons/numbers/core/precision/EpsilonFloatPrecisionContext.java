@@ -20,30 +20,30 @@ import java.io.Serializable;
 
 import org.apache.commons.numbers.core.Precision;
 
-/** Simple {@link DoublePrecisonContext} subclass that uses an absolute epsilon value to
- * determine equality between doubles.
+/** Simple {@link FloatPrecisonContext} subclass that uses an absolute epsilon value to
+ * determine equality between float.
  *
- * <p>This class uses the {@link Precision#compareTo(double, double, double)} method to compare
+ * <p>This class uses the {@link Precision#compareTo(float, float, float)} method to compare
  * numbers. Two values are considered equal if there is no floating point
  * value strictly between them or if their numerical difference is less than or equal
  * to the configured epsilon value.</p>
  *
- * @see Precision#compareTo(double, double, double)
+ * @see Precision#compareTo(float, float, float)
  */
-public class EpsilonDoublePrecisionContext extends DoublePrecisionContext implements Serializable {
+public class EpsilonFloatPrecisionContext extends FloatPrecisionContext implements Serializable {
 
     /** Serializable identifer */
     private static final long serialVersionUID = 20190119L;
 
     /** Epsilon value. */
-    private final double epsilon;
+    private final float epsilon;
 
     /** Simple constructor.
      * @param eps Epsilon value. Numbers are considered equal if there is no
      *      floating point value strictly between them or if their difference is less
      *      than or equal to this value.
      */
-    public EpsilonDoublePrecisionContext(final double eps) {
+    public EpsilonFloatPrecisionContext(final float eps) {
         this.epsilon = eps;
     }
 
@@ -52,7 +52,7 @@ public class EpsilonDoublePrecisionContext extends DoublePrecisionContext implem
      * than or equal to this value.
      * @return the epsilon value for the instance
      */
-    public double getEpsilon() {
+    public float getEpsilon() {
         return epsilon;
     }
 
@@ -61,21 +61,27 @@ public class EpsilonDoublePrecisionContext extends DoublePrecisionContext implem
      * @see #getEpsilon()
      */
     @Override
-    public double getMaxZero() {
+    public float getMaxZero() {
         return epsilon;
     }
 
     /** {@inheritDoc} **/
     @Override
-    public int compare(double a, double b) {
-        return Precision.compareTo(a, b, epsilon);
+    public int compare(float a, float b) {
+        if (Precision.equals(a, b, epsilon)) {
+            return 0;
+        }
+        else if (a < b) {
+            return -1;
+        }
+        return 1;
     }
 
     /** {@inheritDoc} **/
     @Override
     public int hashCode() {
         int result = 31;
-        result += 17 * Double.hashCode(epsilon);
+        result += 17 * Float.hashCode(epsilon);
 
         return result;
     }
@@ -86,11 +92,11 @@ public class EpsilonDoublePrecisionContext extends DoublePrecisionContext implem
         if (this == obj) {
             return true;
         }
-        if (!(obj instanceof EpsilonDoublePrecisionContext)) {
+        if (!(obj instanceof EpsilonFloatPrecisionContext)) {
             return false;
         }
 
-        EpsilonDoublePrecisionContext other = (EpsilonDoublePrecisionContext) obj;
+        EpsilonFloatPrecisionContext other = (EpsilonFloatPrecisionContext) obj;
 
         return this.epsilon == other.epsilon;
     }
