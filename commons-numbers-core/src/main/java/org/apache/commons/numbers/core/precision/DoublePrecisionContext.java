@@ -22,57 +22,63 @@ import java.util.Comparator;
  */
 public abstract class DoublePrecisionContext implements Comparator<Double> {
 
-    /** Get the largest positive double value that is still considered equal
-     * to zero by this instance.
-     * @return the largest positive double value still considered equal to zero
-     */
-    public abstract double getZeroUpperBound();
-
-    /** Return true if the given values should be considered equal to
-     * each other.
+    /** Return true if the given values are considered equal to each other.
      * @param a first value
      * @param b second value
-     * @return true if the given values should be considered equal
+     * @return true if the given values are considered equal
      */
-    public abstract boolean equals(final double a, final double b);
-
-    /** Return true if the given value should be considered equal to
-     * zero. This is equivalent {@code context.equals(n, 0.0)} but with
-     * a most explicit method name.
-     * @param n the number to compare
-     * @return true if the argument should be considered equal to zero.
-     */
-    public boolean equalsZero(final double n) {
-        return equals(n, 0.0);
+    public boolean areEqual(final double a, final double b) {
+        return compare(a, b) == 0;
     }
 
-    /** Compare two double values. The returned value is
-     * <ul>
-     *  <li>
-     *   0 if  {@link #equals(double,double)} returns true,
-     *  </li>
-     *  <li>
-     *   negative if !{@link #equals(double,double)} and {@code x < y},
-     *  </li>
-     *  <li>
-     *   positive if !{@link #equals(double,double)} and {@code x > y} or
-     *   either argument is {@code NaN}.
-     *  </li>
-     * </ul>
-     *
+    /** Return true if the given value is considered equal to zero. This is
+     * equivalent {@code context.areEqual(n, 0.0)} but with a more explicit
+     * method name.
+     * @param n the number to compare to zero
+     * @return true if the argument is considered equal to zero.
+     */
+    public boolean isZero(final double n) {
+        return areEqual(n, 0.0);
+    }
+
+    /**
+     * Return true if the first argument is strictly less than the second.
      * @param a first value
      * @param b second value
-     * @return 0 if the value are considered equal, -1 if the first is smaller than
-     * the second, 1 is the first is larger than the second.
+     * @return true if {@code a < b}
      */
-    public int compare(final double a, final double b) {
-        if (equals(a, b)) {
-            return 0;
-        }
-        else if (a < b) {
-            return -1;
-        }
-        return 1;
+    public boolean isLessThan(final double a, final double b) {
+        return compare(a, b) < 0;
+    }
+
+    /**
+     * Return true if the first argument is less than or equal to the second.
+     * @param a first value
+     * @param b second value
+     * @return true if {@code a <= b}
+     */
+    public boolean isLessThanOrEqual(final double a, final double b) {
+        return compare(a, b) <= 0;
+    }
+
+    /**
+     * Return true if the first argument is strictly greater than the second.
+     * @param a first value
+     * @param b second value
+     * @return true if {@code a > b}
+     */
+    public boolean isGreaterThan(final double a, final double b) {
+        return compare(a, b) > 0;
+    }
+
+    /**
+     * Return true if the first argument is greater than or equal to the second.
+     * @param a first value
+     * @param b second value
+     * @return true if {@code a >= b}
+     */
+    public boolean isGreaterThanOrEqual(final double a, final double b) {
+        return compare(a, b) >= 0;
     }
 
     /** {@inheritDoc} */
@@ -80,4 +86,31 @@ public abstract class DoublePrecisionContext implements Comparator<Double> {
     public int compare(final Double a, final Double b) {
         return compare(a.doubleValue(), b.doubleValue());
     }
+
+    /** Compare two double values. The returned value is
+     * <ul>
+     *  <li>
+     *   {@code 0} if the arguments are considered equal,
+     *  </li>
+     *  <li>
+     *   {@code -1} if {@code a < b},
+     *  </li>
+     *  <li>
+     *   {@code +1} if {@code a > b} or if either value is NaN.
+     *  </li>
+     * </ul>
+     *
+     * @param a first value
+     * @param b second value
+     * @return {@code 0} if the values are considered equal, {@code -1} if the
+     *      first is smaller than the second, {@code 1} is the first is larger
+     *      than the second or either value is NaN.
+     */
+    public abstract int compare(final double a, final double b);
+
+    /** Get the largest positive double value that is still considered equal
+     * to zero by this instance.
+     * @return the largest positive double value still considered equal to zero
+     */
+    public abstract double getMaxZero();
 }
