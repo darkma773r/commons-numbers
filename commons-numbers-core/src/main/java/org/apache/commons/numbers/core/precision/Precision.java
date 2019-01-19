@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.apache.commons.numbers.core;
+package org.apache.commons.numbers.core.precision;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;

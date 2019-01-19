@@ -18,9 +18,7 @@ package org.apache.commons.numbers.core.precision;
 
 import java.io.Serializable;
 
-import org.apache.commons.numbers.core.Precision;
-
-/** Simple {@link FloatPrecisonContext} subclass that uses an absolute epsilon value to
+/** Simple {@link FloatPrecisionContext} subclass that uses an absolute epsilon value to
  * determine equality between float.
  *
  * <p>This class uses the {@link Precision#compareTo(float, float, float)} method to compare

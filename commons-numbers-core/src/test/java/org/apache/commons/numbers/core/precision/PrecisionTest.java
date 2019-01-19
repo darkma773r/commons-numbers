@@ -11,10 +11,12 @@
  * KIND, either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
  */
-package org.apache.commons.numbers.core;
+package org.apache.commons.numbers.core.precision;
 
 import java.math.RoundingMode;
 
+import org.apache.commons.numbers.core.TestUtils;
+import org.apache.commons.numbers.core.precision.Precision;
 import org.junit.Assert;
 import org.junit.Test;
 
