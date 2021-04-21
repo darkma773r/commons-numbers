@@ -19,12 +19,12 @@ package org.apache.commons.numbers.core;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-public class AbstractPrecisionComparatorTest {
+class AbstractPrecisionComparatorTest {
 
     private final StubComparator cmp = new StubComparator();
 
     @Test
-    public void testEq() {
+    void testEq() {
         // act/assert
         Assertions.assertTrue(cmp.eq(0.0, 0.0));
         Assertions.assertTrue(cmp.eq(1.0, 1.0));
@@ -36,7 +36,7 @@ public class AbstractPrecisionComparatorTest {
     }
 
     @Test
-    public void testEqZero() {
+    void testEqZero() {
         // act/assert
         Assertions.assertTrue(cmp.eqZero(0.0));
 
@@ -45,7 +45,7 @@ public class AbstractPrecisionComparatorTest {
     }
 
     @Test
-    public void testLt() {
+    void testLt() {
         // act/assert
         Assertions.assertTrue(cmp.lt(1, 2));
         Assertions.assertTrue(cmp.lt(-2, -1));
@@ -57,7 +57,7 @@ public class AbstractPrecisionComparatorTest {
     }
 
     @Test
-    public void testLte() {
+    void testLte() {
         // act/assert
         Assertions.assertTrue(cmp.lte(1, 2));
         Assertions.assertTrue(cmp.lte(-2, -1));
@@ -69,7 +69,7 @@ public class AbstractPrecisionComparatorTest {
     }
 
     @Test
-    public void testGt() {
+    void testGt() {
         // act/assert
         Assertions.assertTrue(cmp.gt(2, 1));
         Assertions.assertTrue(cmp.gt(-1, -2));
@@ -81,7 +81,7 @@ public class AbstractPrecisionComparatorTest {
     }
 
     @Test
-    public void testGte() {
+    void testGte() {
         // act/assert
         Assertions.assertTrue(cmp.gte(2, 1));
         Assertions.assertTrue(cmp.gte(-1, -2));
@@ -93,7 +93,7 @@ public class AbstractPrecisionComparatorTest {
     }
 
     @Test
-    public void testSign() {
+    void testSign() {
         // act/assert
         Assertions.assertEquals(0, cmp.sign(0.0));
 
@@ -106,7 +106,7 @@ public class AbstractPrecisionComparatorTest {
     }
 
     @Test
-    public void testCompare() {
+    void testCompare() {
         // act/assert
         Assertions.assertEquals(0, cmp.compare(1, 1));
         Assertions.assertEquals(-1, cmp.compare(1, 2));
@@ -118,7 +118,7 @@ public class AbstractPrecisionComparatorTest {
     }
 
     @Test
-    public void testCompare_wrapper() {
+    void testCompare_wrapper() {
         // act/assert
         Assertions.assertEquals(0, cmp.compare(Double.valueOf(1), Double.valueOf(1)));
         Assertions.assertEquals(-1, cmp.compare(Double.valueOf(1), Double.valueOf(2)));

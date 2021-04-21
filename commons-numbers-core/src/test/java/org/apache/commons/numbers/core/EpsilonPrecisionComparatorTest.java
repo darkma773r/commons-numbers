@@ -19,10 +19,10 @@ package org.apache.commons.numbers.core;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-public class EpsilonPrecisionComparatorTest {
+class EpsilonPrecisionComparatorTest {
 
     @Test
-    public void testGetters() {
+    void testGetters() {
         // arrange
         final double eps = 1e-6;
 
@@ -34,7 +34,7 @@ public class EpsilonPrecisionComparatorTest {
     }
 
     @Test
-    public void testInvalidEpsilonValues() {
+    void testInvalidEpsilonValues() {
         // act/assert
         Assertions.assertThrows(IllegalArgumentException.class, () -> new EpsilonPrecisionComparator(-1.0));
 
@@ -54,7 +54,7 @@ public class EpsilonPrecisionComparatorTest {
     }
 
     @Test
-    public void testSign() {
+    void testSign() {
         // arrange
         final double eps = 1e-2;
 
@@ -76,7 +76,7 @@ public class EpsilonPrecisionComparatorTest {
     }
 
     @Test
-    public void testCompare_compareToZero() {
+    void testCompare_compareToZero() {
         // arrange
         final double eps = 1e-2;
 
@@ -99,7 +99,7 @@ public class EpsilonPrecisionComparatorTest {
     }
 
     @Test
-    public void testCompare_compareNonZero() {
+    void testCompare_compareNonZero() {
         // arrange
         final double eps = 1e-5;
         final double small = 1e-3;
@@ -125,7 +125,7 @@ public class EpsilonPrecisionComparatorTest {
     }
 
     @Test
-    public void testCompare_NaN() {
+    void testCompare_NaN() {
         // arrange
         final EpsilonPrecisionComparator cmp = new EpsilonPrecisionComparator(1e-6);
 
@@ -142,7 +142,7 @@ public class EpsilonPrecisionComparatorTest {
     }
 
     @Test
-    public void testCompare_infinity() {
+    void testCompare_infinity() {
         // arrange
         final EpsilonPrecisionComparator cmp = new EpsilonPrecisionComparator(1e-6);
 
@@ -157,7 +157,7 @@ public class EpsilonPrecisionComparatorTest {
     }
 
     @Test
-    public void testHashCode() {
+    void testHashCode() {
         // arrange
         final EpsilonPrecisionComparator a = new EpsilonPrecisionComparator(1e-6);
         final EpsilonPrecisionComparator b = new EpsilonPrecisionComparator(1e-7);
@@ -171,7 +171,7 @@ public class EpsilonPrecisionComparatorTest {
     }
 
     @Test
-    public void testEquals() {
+    void testEquals() {
         // arrange
         final EpsilonPrecisionComparator a = new EpsilonPrecisionComparator(1e-6);
         final EpsilonPrecisionComparator b = new EpsilonPrecisionComparator(1e-7);
@@ -190,7 +190,7 @@ public class EpsilonPrecisionComparatorTest {
     }
 
     @Test
-    public void testEqualsAndHashCode_signedZeroConsistency() {
+    void testEqualsAndHashCode_signedZeroConsistency() {
         // arrange
         final EpsilonPrecisionComparator a = new EpsilonPrecisionComparator(0.0);
         final EpsilonPrecisionComparator b = new EpsilonPrecisionComparator(-0.0);
@@ -209,7 +209,7 @@ public class EpsilonPrecisionComparatorTest {
     }
 
     @Test
-    public void testToString() {
+    void testToString() {
         // arrange
         final EpsilonPrecisionComparator a = new EpsilonPrecisionComparator(1d);
 
@@ -219,6 +219,18 @@ public class EpsilonPrecisionComparatorTest {
         // assert
         Assertions.assertTrue(str.contains("EpsilonPrecisionComparator"));
         Assertions.assertTrue(str.contains("epsilon= 1"));
+    }
+
+    @Test
+    void testSerializable() {
+        // arrange
+        final EpsilonPrecisionComparator in = new EpsilonPrecisionComparator(1d);
+
+        // act
+        final EpsilonPrecisionComparator out = (EpsilonPrecisionComparator) TestUtils.serializeAndRecover(in);
+
+        // assert
+        Assertions.assertEquals(in, out);
     }
 
     /**
