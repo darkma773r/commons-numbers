@@ -21,7 +21,7 @@ package org.apache.commons.numbers.core;
  * This is especially useful when comparing outputs of a computation where floating
  * point errors may have occurred.
  */
-public interface DoublePrecisionContext {
+public interface PrecisionComparator {
 
     /** Return true if the given values are considered equal to each other.
      * @param a first value
@@ -76,7 +76,7 @@ public interface DoublePrecisionContext {
      * @return 0 if the number is considered equal to 0, -1 if less than
      *      0, and +1 if greater than 0
      */
-    int sign(final double a);
+    int sign(double a);
 
     /** Compare two double values. The returned value is
      * <ul>

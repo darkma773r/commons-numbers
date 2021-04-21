@@ -16,7 +16,7 @@
  */
 package org.apache.commons.numbers.core;
 
-/** Simple {@link DoublePrecisionContext} subclass that uses an absolute epsilon value to
+/** Simple {@link PrecisionComparator} subclass that uses an absolute epsilon value to
  * determine equality between doubles.
  *
  * <p>This class uses the {@link Precision#compareTo(double, double, double)} method to compare
@@ -26,7 +26,7 @@ package org.apache.commons.numbers.core;
  *
  * @see Precision#compareTo(double, double, double)
  */
-public class EpsilonDoublePrecisionContext extends AbstractDoublePrecisionContext {
+public class EpsilonPrecisionComparator extends AbstractPrecisionComparator {
 
     /** Epsilon value. */
     private final double epsilon;
@@ -37,7 +37,7 @@ public class EpsilonDoublePrecisionContext extends AbstractDoublePrecisionContex
      *      than or equal to this value.
      * @throws IllegalArgumentException if the given epsilon value is infinite, NaN, or negative
      */
-    public EpsilonDoublePrecisionContext(final double eps) {
+    public EpsilonPrecisionComparator(final double eps) {
         if (!Double.isFinite(eps) || eps < 0.0) {
             throw new IllegalArgumentException("Invalid epsilon value: " + eps);
         }
@@ -74,11 +74,11 @@ public class EpsilonDoublePrecisionContext extends AbstractDoublePrecisionContex
         if (this == obj) {
             return true;
         }
-        if (!(obj instanceof EpsilonDoublePrecisionContext)) {
+        if (!(obj instanceof EpsilonPrecisionComparator)) {
             return false;
         }
 
-        final EpsilonDoublePrecisionContext other = (EpsilonDoublePrecisionContext) obj;
+        final EpsilonPrecisionComparator other = (EpsilonPrecisionComparator) obj;
 
         return Double.compare(this.epsilon, other.epsilon) == 0;
     }

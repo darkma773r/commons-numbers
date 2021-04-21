@@ -503,10 +503,10 @@ class PrecisionTest {
     }
 
     @Test
-    void testCreateEpsilonContext() {
-        final DoublePrecisionContext context = Precision.createContext(1e-3);
+    void testCreateEpsilonComparator() {
+        final PrecisionComparator context = Precision.createEpsilonComparator(1e-3);
 
-        Assertions.assertEquals(EpsilonDoublePrecisionContext.class, context.getClass());
-        Assertions.assertEquals(1e-3, ((EpsilonDoublePrecisionContext) context).getEpsilon(), 0);
+        Assertions.assertEquals(EpsilonPrecisionComparator.class, context.getClass());
+        Assertions.assertEquals(1e-3, ((EpsilonPrecisionComparator) context).getEpsilon(), 0);
     }
 }

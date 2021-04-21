@@ -16,9 +16,9 @@
  */
 package org.apache.commons.numbers.core;
 
-/** Abstract base class for {@link DoublePrecisionContext} implementations.
+/** Abstract base class for {@link PrecisionComparator} implementations.
  */
-public abstract class AbstractDoublePrecisionContext implements DoublePrecisionContext {
+public abstract class AbstractPrecisionComparator implements PrecisionComparator {
 
     /** {@inheritDoc} */
     @Override
