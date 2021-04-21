@@ -500,4 +500,14 @@ public final class Precision {
                                             double delta) {
         return x + delta - x;
     }
+
+    /** Return a new {@link DoublePrecisionContext} that uses the given epsilon value
+     * when determining equality.
+     * @param eps epsilon value to use whe determining equality
+     * @return a {@link DoublePrecisionContext} that uses the given epsilon value
+     *      when determining equality.
+     */
+    public static DoublePrecisionContext createContext(final double eps) {
+        return new EpsilonDoublePrecisionContext(eps);
+    }
 }

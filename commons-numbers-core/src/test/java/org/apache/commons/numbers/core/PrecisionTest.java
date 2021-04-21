@@ -501,4 +501,12 @@ class PrecisionTest {
         Assertions.assertFalse(Precision.equals(2.0f, -2.0f, 1));
         Assertions.assertTrue(Precision.equals(0.0f, -0.0f, 0));
     }
+
+    @Test
+    void testCreateEpsilonContext() {
+        final DoublePrecisionContext context = Precision.createContext(1e-3);
+
+        Assertions.assertEquals(EpsilonDoublePrecisionContext.class, context.getClass());
+        Assertions.assertEquals(1e-3, ((EpsilonDoublePrecisionContext) context).getEpsilon(), 0);
+    }
 }
