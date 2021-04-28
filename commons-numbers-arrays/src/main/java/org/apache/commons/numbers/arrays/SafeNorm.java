@@ -27,16 +27,87 @@ public final class SafeNorm {
     /** Constant. */
     private static final double R_GIANT = 1.304e+19;
 
+    private static final double R_GIANT_3 = R_GIANT / 3;
+
     /** Private constructor. */
     private SafeNorm() {
         // intentionally empty.
+    }
+
+    public static double value(final double v1, final double v2, final double v3) {
+        double s1 = 0;
+        double s2 = 0;
+        double s3 = 0;
+
+        final double a1 = Math.abs(v1);
+        final double a2 = Math.abs(v2);
+        final double a3 = Math.abs(v3);
+
+        final boolean a1IsLow = a1 <= R_DWARF;
+        final boolean a2IsLow = a2 <= R_DWARF;
+        final boolean a3IsLow = a2 <= R_DWARF;
+
+        final double x1max = Math.max(Math.max(a1, a2), a3);
+        final double x3max = Math.max(Math.max(a1IsLow ? a1 : 0d, a2IsLow ? a2 : 0d), a3IsLow ? a3 : 0d);
+
+        if (a1 > R_GIANT_3) {
+            final double r = a1 / x1max;
+            s1 += r * r;
+        } else if (a1IsLow) {
+            if (a1 > 0) {
+                final double r = a1 / x3max;
+                s3 += r * r;
+            }
+        } else {
+            s2 += a1 * a1;
+        }
+
+        if (a2 > R_GIANT_3) {
+            final double r = a2 / x1max;
+            s1 += r * r;
+        } else if (a2IsLow) {
+            if (a2 > 0) {
+                final double r = a2 / x3max;
+                s3 += r * r;
+            }
+        } else {
+            s2 += a2 * a2;
+        }
+
+        if (a3 > R_GIANT_3) {
+            final double r = a3 / x1max;
+            s1 += r * r;
+        } else if (a3IsLow) {
+            if (a3 > 0) {
+                final double r = a3 / x3max;
+                s3 += r * r;
+            }
+        } else {
+            s2 += a3 * a3;
+        }
+
+        double norm;
+        if (s1 != 0) {
+            norm = x1max * Math.sqrt(s1 + (s2 / x1max) / x1max);
+        } else {
+            if (s2 == 0) {
+                norm = x3max * Math.sqrt(s3);
+            } else {
+                if (s2 >= x3max) {
+                    norm = Math.sqrt(s2 * (1 + (x3max / s2) * (x3max * s3)));
+                } else {
+                    norm = Math.sqrt(x3max * ((s2 / x3max) + (x3max * s3)));
+                }
+            }
+        }
+        return norm;
     }
 
     /**
      * @param v Cartesian coordinates.
      * @return the 2-norm of the vector.
      */
-    public static double value(double[] v) {
+    public static double value(final double[] v) {
         double s1 = 0;
         double s2 = 0;
         double s3 = 0;
