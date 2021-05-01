@@ -64,7 +64,6 @@ public class NormEvaluator {
         double[] vec;
         double exact;
         double sample;
-        int ulpError;
         for (int i = 0; i < count; ++i) {
             vec = randomVector();
 
@@ -73,9 +72,7 @@ public class NormEvaluator {
             for (final Map.Entry<String, ToDoubleFunction<double[]>> entry : methods.entrySet()) {
                 sample = entry.getValue().applyAsDouble(vec);
 
-                ulpError = computeUlpDifference(exact, sample);
-
-                accumulators.get(entry.getKey()).report(ulpError);
+                accumulators.get(entry.getKey()).report(exact, sample);
             }
         }
 
@@ -175,9 +172,12 @@ public class NormEvaluator {
 
         private final double ulpErrorStdDev;
 
-        Stats(final double ulpErrorMean, final double ulpErrorStdDev) {
+        private final int nonFiniteCount;
+
+        Stats(final double ulpErrorMean, final double ulpErrorStdDev, final int nonFiniteCount) {
             this.ulpErrorMean = ulpErrorMean;
             this.ulpErrorStdDev = ulpErrorStdDev;
+            this.nonFiniteCount = nonFiniteCount;
         }
 
         public double getUlpErrorMean() {
@@ -186,6 +186,10 @@ public class NormEvaluator {
 
         public double getUlpErrorStdDev() {
             return ulpErrorStdDev;
+        }
+
+        public int getNonFiniteCount() {
+            return nonFiniteCount;
         }
     }
 
@@ -199,28 +203,36 @@ public class NormEvaluator {
             ulpErrors = new double[count];
         }
 
-        public void report(final int ulpError) {
-            ulpErrors[i++] = ulpError;
+        public void report(final double expected, final double actual) {
+            ulpErrors[i++] = Double.isFinite(actual) ?
+                    computeUlpDifference(expected, actual) :
+                    Double.NaN;
         }
 
         public Stats computeStats() {
+            int finiteCount = 0;
             double sum = 0d;
             for (double ulpError : ulpErrors) {
-                sum += ulpError;
+                if (Double.isFinite(ulpError)) {
+                    ++finiteCount;
+                    sum += ulpError;
+                }
             }
 
-            final double mean = sum / (ulpErrors.length);
+            final double mean = sum / (finiteCount);
 
             double diffSumSq = 0d;
             double diff;
             for (double ulpError : ulpErrors) {
-                diff = ulpError - mean;
-                diffSumSq = diff * diff;
+                if (Double.isFinite(ulpError)) {
+                    diff = ulpError - mean;
+                    diffSumSq = diff * diff;
+                }
             }
 
-            final double stdDev = Math.sqrt(diffSumSq / (ulpErrors.length - 1));
+            final double stdDev = Math.sqrt(diffSumSq / (finiteCount - 1));
 
-            return new Stats(mean, stdDev);
+            return new Stats(mean, stdDev, ulpErrors.length - finiteCount);
         }
     }
 }

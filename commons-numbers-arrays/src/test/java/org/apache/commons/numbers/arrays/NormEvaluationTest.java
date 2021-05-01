@@ -16,6 +16,7 @@
  */
 package org.apache.commons.numbers.arrays;
 
+import java.util.Arrays;
 import java.util.Map;
 import java.util.Random;
 import java.util.function.ToDoubleFunction;
@@ -39,11 +40,11 @@ class NormEvaluationTest {
     @Test
     void evaluate() {
         final Random rnd = new Random(1L);
-        final NormEvaluator eval = new NormEvaluator(3, -300, +300, rnd);
+        final NormEvaluator eval = new NormEvaluator(3, -600, +600, rnd);
         eval.addMethod("direct", DIRECT_NORM)
             .addMethod("safeNorm", SafeNorm::value);
 
-        final NormEvaluator.Result result = eval.evaluate(1000);
+        final NormEvaluator.Result result = eval.evaluate(10000);
 
         printResults(result);
     }
@@ -54,11 +55,12 @@ class NormEvaluationTest {
         System.out.println("Input length: " + result.getInputLen());
         System.out.println("Min exp: " + result.getMinExp());
         System.out.println("Max exp: " + result.getMaxExp());
-        System.out.println("| Name | ulp error mean | url error std dev |");
+        System.out.println("| Name | ulp error mean | ulp error std dev | non-finite count |");
         for (final Map.Entry<String, NormEvaluator.Stats> entry : result.getStats().entrySet()) {
             System.out.println("| " + entry.getKey() + " | " +
                     entry.getValue().getUlpErrorMean() + " | " +
-                    entry.getValue().getUlpErrorStdDev() + " |");
+                    entry.getValue().getUlpErrorStdDev() + " | " +
+                    entry.getValue().getNonFiniteCount() + " |");
         }
     }
 }
