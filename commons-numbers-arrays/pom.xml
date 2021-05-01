@@ -32,6 +32,9 @@
   <description>Array utilities.</description>
 
   <properties>
+    <maven.compiler.testSource>1.9</maven.compiler.testSource>
+    <maven.compiler.testTarget>1.9</maven.compiler.testTarget>
+
     <!-- The Java Module System Name -->
     <commons.module.name>org.apache.commons.numbers.arrays</commons.module.name>
     <!-- This value must reflect the current name of the base package. -->
