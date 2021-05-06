@@ -80,6 +80,9 @@
   </dependencies>
 
   <properties>
+    <maven.compiler.source>1.9</maven.compiler.source>
+    <maven.compiler.target>1.9</maven.compiler.target>
+
     <!-- OSGi -->
     <commons.osgi.symbolicName>org.apache.commons.numbers.examples.jmh</commons.osgi.symbolicName>
     <commons.osgi.export>org.apache.commons.numbers.examples.jmh</commons.osgi.export>

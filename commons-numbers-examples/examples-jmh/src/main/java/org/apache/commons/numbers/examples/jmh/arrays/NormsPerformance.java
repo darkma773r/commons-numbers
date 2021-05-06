@@ -17,8 +17,10 @@
 package org.apache.commons.numbers.examples.jmh.arrays;
 
 import java.util.concurrent.TimeUnit;
+import java.util.function.ToDoubleFunction;
 
 import org.apache.commons.rng.UniformRandomProvider;
+import org.apache.commons.rng.simple.RandomSource;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Fork;
@@ -26,8 +28,10 @@ import org.openjdk.jmh.annotations.Measurement;
 import org.openjdk.jmh.annotations.Mode;
 import org.openjdk.jmh.annotations.OutputTimeUnit;
 import org.openjdk.jmh.annotations.Scope;
+import org.openjdk.jmh.annotations.Setup;
 import org.openjdk.jmh.annotations.State;
 import org.openjdk.jmh.annotations.Warmup;
+import org.openjdk.jmh.infra.Blackhole;
 
 /**
  * Execute benchmarks for {@link SafeNorm} methods.
@@ -38,21 +42,41 @@ import org.openjdk.jmh.annotations.Warmup;
 @Measurement(iterations = 5, time = 1, timeUnit = TimeUnit.SECONDS)
 @State(Scope.Benchmark)
 @Fork(value = 1, jvmArgs = {"-server", "-Xms512M", "-Xmx512M"})
-public class SafeNormPerformance {
+public class NormsPerformance {
+
+    @State(Scope.Benchmark)
+    public static class VectorArrayInput {
+
+        private double[][] vectors;
+
+        public double[][] getVectors() {
+            return vectors;
+        }
+
+        @Setup
+        public void setup() {
+            final UniformRandomProvider rng = RandomSource.create(RandomSource.XO_RO_SHI_RO_1024_PP);
+            vectors = new double[100_000][];
+            for (int i = 0; i < vectors.length; ++i) {
+                vectors[i] = randomDoubleArray(rng, 3);
+            }
+        }
+    }
 
     /** Creates a random double number with a random sign and mantissa and a large range for
      * the exponent. The numbers will not be uniform over the range.
      * @param rng random number generator
      * @return the random number
      */
-    private static double randomDouble(final UniformRandomProvider rng) {
+    private static double randomDouble(final UniformRandomProvider rng, final int maxExp, final int minExp) {
         // Create random doubles using random bits in the sign bit and the mantissa.
         // Then create an exponent in the range -64 to 64. Thus the sum product
         // of 4 max or min values will not over or underflow.
         final long mask = ((1L << 52) - 1) | 1L << 63;
         final long bits = rng.nextLong() & mask;
         // The exponent must be unsigned so + 1023 to the signed exponent
-        final long exp = rng.nextInt(129) - 64 + 1023;
+        final int expRange = Math.abs(maxExp - minExp);
+        final long exp = rng.nextInt(expRange) + minExp + 1023;
         return Double.longBitsToDouble(bits | (exp << 52));
     }
 
@@ -65,19 +89,37 @@ public class SafeNormPerformance {
         final double[] arr = new double[len];
 
         for (int i = 0; i < arr.length; ++i) {
-            arr[i] = randomDouble(rng);
+            arr[i] = randomDouble(rng, -550, +550);
         }
 
         return arr;
     }
 
-    @Benchmark
-    public void safeNorm3D() {
-
+    private static void eval(final ToDoubleFunction<double[]> fn, final VectorArrayInput input,
+            final Blackhole bh) {
+        final double[][] vectors = input.getVectors();
+        for (int i = 0; i < vectors.length; ++i) {
+            bh.consume(fn.applyAsDouble(vectors[i]));
+        }
     }
 
     @Benchmark
-    public void safeNorm3DArray() {
+    public void exact(final VectorArrayInput input, final Blackhole bh) {
+        eval(new Norms.Exact(), input, bh);
+    }
 
+    @Benchmark
+    public void standard(final VectorArrayInput input, final Blackhole bh) {
+        eval(new Norms.Standard(), input, bh);
+    }
+
+    @Benchmark
+    public void safe(final VectorArrayInput input, final Blackhole bh) {
+        eval(new Norms.Safe(), input, bh);
+    }
+
+    @Benchmark
+    public void herbert(final VectorArrayInput input, final Blackhole bh) {
+        eval(new Norms.Herbert(), input, bh);
     }
 }
