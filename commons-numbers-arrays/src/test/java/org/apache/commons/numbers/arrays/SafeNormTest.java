@@ -18,13 +18,10 @@ package org.apache.commons.numbers.arrays;
 
 import java.math.BigDecimal;
 import java.math.MathContext;
-import java.math.RoundingMode;
 import java.util.Arrays;
 import java.util.Random;
 import java.util.function.Supplier;
 
-import org.apache.commons.rng.UniformRandomProvider;
-import org.apache.commons.rng.simple.RandomSource;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 

@@ -22,14 +22,15 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Random;
 import java.util.function.ToDoubleFunction;
+
+import org.apache.commons.rng.UniformRandomProvider;
 
 /**
  * Class used to evaluate the accuracy of different norm computation
  * methods.
  */
-public class NormEvaluator {
+public class EuclideanNormEvaluator {
 
     /** Map of names to norm computation methods. */
     private final Map<String, ToDoubleFunction<double[]>> methods = new LinkedHashMap<>();
@@ -40,21 +41,21 @@ public class NormEvaluator {
 
     private final int maxExp;
 
-    private final Random rnd;
+    private final UniformRandomProvider rng;
 
-    NormEvaluator(final int len, final int minExp, final int maxExp, final Random rnd) {
+    EuclideanNormEvaluator(final int len, final int minExp, final int maxExp, final UniformRandomProvider rng) {
         this.len = len;
         this.minExp = minExp;
         this.maxExp = maxExp;
-        this.rnd = rnd;
+        this.rng = rng;
     }
 
-    public NormEvaluator addMethod(final String name, final ToDoubleFunction<double[]> method) {
+    public EuclideanNormEvaluator addMethod(final String name, final ToDoubleFunction<double[]> method) {
         methods.put(name, method);
         return this;
     }
 
-    public NormEvaluator.Result evaluate(final int count) {
+    public EuclideanNormEvaluator.Result evaluate(final int count) {
 
         final Map<String, NormStatsAccumulator> accumulators = new HashMap<>();
         for (final String name : methods.keySet()) {
@@ -94,13 +95,11 @@ public class NormEvaluator {
 
     private double randomDouble() {
         // Create random doubles using random bits in the sign bit and the mantissa.
-        // Then create an exponent in the range -64 to 64. Thus the sum product
-        // of 4 max or min values will not over or underflow.
         final long mask = ((1L << 52) - 1) | 1L << 63;
-        final long bits = rnd.nextLong() & mask;
+        final long bits = rng.nextLong() & mask;
         // The exponent must be unsigned so + 1023 to the signed exponent
         final int expRange = Math.abs(maxExp - minExp);
-        final long exp = rnd.nextInt(expRange) + minExp + 1023;
+        final long exp = rng.nextInt(expRange) + minExp + 1023;
         return Double.longBitsToDouble(bits | (exp << 52));
     }
 

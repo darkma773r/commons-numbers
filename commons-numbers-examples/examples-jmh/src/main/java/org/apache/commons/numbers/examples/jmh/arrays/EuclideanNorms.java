@@ -20,7 +20,7 @@ import java.math.BigDecimal;
 import java.math.MathContext;
 import java.util.function.ToDoubleFunction;
 
-public final class Norms {
+public final class EuclideanNorms {
 
     static final class Exact implements ToDoubleFunction<double[]> {
 
@@ -41,7 +41,7 @@ public final class Norms {
         }
     }
 
-    static final class Standard implements ToDoubleFunction<double[]> {
+    static final class Direct implements ToDoubleFunction<double[]> {
 
         /** {@inheritDoc} */
         @Override
@@ -54,43 +54,7 @@ public final class Norms {
         }
     }
 
-    static final class Herbert implements ToDoubleFunction<double[]> {
-
-        /** {@inheritDoc} */
-        @Override
-        public double applyAsDouble(final double[] v) {
-            // Sum of big, normal and small numbers
-            double s1 = 0;
-            double s2 = 0;
-            double s3 = 0;
-            for (int i = 0; i < v.length; i++) {
-                final double x = Math.abs(v[i]);
-                if (x > 0x1.0p500) {
-                    // Scale down big numbers
-                    s1 += square(x * 0x1.0p-600);
-                } else if (x < 0x1.0p-500) {
-                    // Scale up small numbers
-                    s3 += square(x * 0x1.0p600);
-                } else {
-                    // Unscaled
-                    s2 += square(x);
-                }
-            }
-            // The highest sum is the significant component. Add the next significant.
-            if (s1 != 0) {
-                return Math.sqrt(s1 + s2 * 0x1.0p-600 * 0x1.0p-600) * 0x1.0p600;
-            } else if (s2 != 0) {
-                return Math.sqrt(s2 + s3 * 0x1.0p-600 * 0x1.0p-600);
-            }
-            return Math.sqrt(s3) * 0x1.0p-600;
-        }
-
-        private static double square(final double x) {
-            return x * x;
-        }
-    }
-
-    static final class Safe implements ToDoubleFunction<double[]> {
+    static final class Enorm implements ToDoubleFunction<double[]> {
 
         /** Constant. */
         private static final double R_DWARF = 3.834e-20;
@@ -150,6 +114,42 @@ public final class Norms {
                 }
             }
             return norm;
+        }
+    }
+
+    static final class EnormMod implements ToDoubleFunction<double[]> {
+
+        /** {@inheritDoc} */
+        @Override
+        public double applyAsDouble(final double[] v) {
+            // Sum of big, normal and small numbers
+            double s1 = 0;
+            double s2 = 0;
+            double s3 = 0;
+            for (int i = 0; i < v.length; i++) {
+                final double x = Math.abs(v[i]);
+                if (x > 0x1.0p500) {
+                    // Scale down big numbers
+                    s1 += square(x * 0x1.0p-600);
+                } else if (x < 0x1.0p-500) {
+                    // Scale up small numbers
+                    s3 += square(x * 0x1.0p600);
+                } else {
+                    // Unscaled
+                    s2 += square(x);
+                }
+            }
+            // The highest sum is the significant component. Add the next significant.
+            if (s1 != 0) {
+                return Math.sqrt(s1 + s2 * 0x1.0p-600 * 0x1.0p-600) * 0x1.0p600;
+            } else if (s2 != 0) {
+                return Math.sqrt(s2 + s3 * 0x1.0p-600 * 0x1.0p-600);
+            }
+            return Math.sqrt(s3) * 0x1.0p-600;
+        }
+
+        private static double square(final double x) {
+            return x * x;
         }
     }
 }

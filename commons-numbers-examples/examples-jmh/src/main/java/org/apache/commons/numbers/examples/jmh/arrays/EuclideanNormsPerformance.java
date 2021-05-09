@@ -42,7 +42,7 @@ import org.openjdk.jmh.infra.Blackhole;
 @Measurement(iterations = 5, time = 1, timeUnit = TimeUnit.SECONDS)
 @State(Scope.Benchmark)
 @Fork(value = 1, jvmArgs = {"-server", "-Xms512M", "-Xmx512M"})
-public class NormsPerformance {
+public class EuclideanNormsPerformance {
 
     @State(Scope.Benchmark)
     public static class VectorArrayInput {
@@ -105,21 +105,21 @@ public class NormsPerformance {
 
     @Benchmark
     public void exact(final VectorArrayInput input, final Blackhole bh) {
-        eval(new Norms.Exact(), input, bh);
+        eval(new EuclideanNorms.Exact(), input, bh);
     }
 
     @Benchmark
-    public void standard(final VectorArrayInput input, final Blackhole bh) {
-        eval(new Norms.Standard(), input, bh);
+    public void direct(final VectorArrayInput input, final Blackhole bh) {
+        eval(new EuclideanNorms.Direct(), input, bh);
     }
 
     @Benchmark
-    public void safe(final VectorArrayInput input, final Blackhole bh) {
-        eval(new Norms.Safe(), input, bh);
+    public void enorm(final VectorArrayInput input, final Blackhole bh) {
+        eval(new EuclideanNorms.Enorm(), input, bh);
     }
 
     @Benchmark
-    public void herbert(final VectorArrayInput input, final Blackhole bh) {
-        eval(new Norms.Herbert(), input, bh);
+    public void enormMod(final VectorArrayInput input, final Blackhole bh) {
+        eval(new EuclideanNorms.EnormMod(), input, bh);
     }
 }
