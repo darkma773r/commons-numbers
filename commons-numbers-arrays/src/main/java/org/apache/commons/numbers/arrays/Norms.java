@@ -24,8 +24,6 @@ public final class Norms {
 
     private static final double SCALE_DOWN = 0x1.0p-600;
 
-    private static final double SCALE_DOWN_SQ = SCALE_DOWN * SCALE_DOWN;
-
     private static final double SCALE_UP = 0x1.0p+600;
 
     /** Utility class; no instantiation. */
@@ -45,11 +43,9 @@ public final class Norms {
 
     public static double manhattan(final double[] v) {
         double s = 0;
-
         for (int i = 0; i < v.length; ++i) {
             s += Math.abs(v[i]);
         }
-
         return s;
     }
 
@@ -59,12 +55,12 @@ public final class Norms {
 
     public static double euclidean(final double x, final double y) {
         // TODO
-        return 0d;
+        return euclidean(new double[] {x, y});
     }
 
     public static double euclidean(final double x, final double y, final double z) {
         // TODO
-        return 0d;
+        return euclidean(new double[] {x, y, z});
     }
 
     public static double euclidean(final double[] v) {
@@ -89,9 +85,9 @@ public final class Norms {
 
         // The highest sum is the significant component. Add the next significant.
         if (s1 != 0) {
-            return Math.sqrt(s1 + (s2 * SCALE_DOWN_SQ)) * SCALE_UP;
+            return Math.sqrt(s1 + (s2 * SCALE_DOWN * SCALE_DOWN)) * SCALE_UP;
         } else if (s2 != 0) {
-            return Math.sqrt(s2 + (s3 * SCALE_DOWN_SQ));
+            return Math.sqrt(s2 + (s3 * SCALE_DOWN * SCALE_DOWN));
         }
         return Math.sqrt(s3) * SCALE_DOWN;
     }
@@ -112,11 +108,9 @@ public final class Norms {
 
     public static double maximum(final double[] v) {
         double max = 0d;
-
         for (int i = 0; i < v.length; ++i) {
             max = Math.max(max, Math.abs(v[i]));
         }
-
         return max;
     }
 

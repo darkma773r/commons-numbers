@@ -20,8 +20,15 @@ import java.math.BigDecimal;
 import java.math.MathContext;
 import java.util.function.ToDoubleFunction;
 
+/** Class containing various Euclidean norm computation methods for comparison.
+ */
 public final class EuclideanNorms {
 
+    /** No instantiation. */
+    private EuclideanNorms() {}
+
+    /** Exact computation method using {@link BigDecimal} and {@link MathContext#DECIMAL128}.
+     */
     static final class Exact implements ToDoubleFunction<double[]> {
 
         /** {@inheritDoc} */
@@ -34,13 +41,16 @@ public final class EuclideanNorms {
             BigDecimal n;
             for (int i = 0; i < v.length; ++i) {
                 n = BigDecimal.valueOf(Double.isFinite(v[i]) ? v[i] : 0d);
-                sum = sum.add(n.multiply(n,ctx), ctx);
+                sum = sum.add(n.multiply(n, ctx), ctx);
             }
 
             return sum.sqrt(ctx).doubleValue();
         }
     }
 
+    /** Direct computation method that simply computes the sums of squares and takes
+     * the square root with no special handling of values.
+     */
     static final class Direct implements ToDoubleFunction<double[]> {
 
         /** {@inheritDoc} */
@@ -54,6 +64,9 @@ public final class EuclideanNorms {
         }
     }
 
+    /** Translation of the <a href="http://www.netlib.org/minpack">minpack</a>
+     * "enorm" subroutine. This method handles overflow and underflow.
+     */
     static final class Enorm implements ToDoubleFunction<double[]> {
 
         /** Constant. */
@@ -117,6 +130,8 @@ public final class EuclideanNorms {
         }
     }
 
+    /** Modified version of {@link Enorm} created by Alex Herbert.
+     */
     static final class EnormMod implements ToDoubleFunction<double[]> {
 
         /** {@inheritDoc} */
@@ -148,6 +163,10 @@ public final class EuclideanNorms {
             return Math.sqrt(s3) * 0x1.0p-600;
         }
 
+        /** Compute the square of {@code x}.
+         * @param x input value
+         * @return square of {@code x}
+         */
         private static double square(final double x) {
             return x * x;
         }
