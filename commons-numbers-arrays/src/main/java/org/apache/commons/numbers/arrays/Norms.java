@@ -16,6 +16,9 @@
  */
 package org.apache.commons.numbers.arrays;
 
+/** Class containing methods to compute various norm values.
+ * @see <a href="https://en.wikipedia.org/wiki/Norm_(mathematics)">Norm</a>
+ */
 public final class Norms {
 
     private static final double SMALL_THRESH = 0x1.0p-500;
@@ -54,12 +57,10 @@ public final class Norms {
     }
 
     public static double euclidean(final double x, final double y) {
-        // TODO
         return euclidean(new double[] {x, y});
     }
 
     public static double euclidean(final double x, final double y, final double z) {
-        // TODO
         return euclidean(new double[] {x, y, z});
     }
 
@@ -84,6 +85,9 @@ public final class Norms {
         }
 
         // The highest sum is the significant component. Add the next significant.
+        // Note that the "x * SCALE_DOWN * SCALE_DOWN" expressions must be executed
+        // in the order given. If the two scale factors are multiplied together first,
+        // they will underflow to zero.
         if (s1 != 0) {
             return Math.sqrt(s1 + (s2 * SCALE_DOWN * SCALE_DOWN)) * SCALE_UP;
         } else if (s2 != 0) {

@@ -94,12 +94,89 @@ class NormsTest {
     }
 
     @Test
+    void testEuclidean_2d_simple() {
+        // act/assert
+        Assertions.assertEquals(0d, Norms.euclidean(0d, 0d));
+        Assertions.assertEquals(1d, Norms.euclidean(1d, 0d));
+        Assertions.assertEquals(1d, Norms.euclidean(0d, 1d));
+        Assertions.assertEquals(5d, Norms.euclidean(-3d, 4d));
+
+        Assertions.assertEquals(Math.sqrt(2), Norms.euclidean(1d, -1d));
+
+        Assertions.assertEquals(Double.NaN, Norms.euclidean(-2d, Double.NaN));
+        Assertions.assertEquals(Double.NaN,
+                Norms.euclidean(Double.NaN, Double.NEGATIVE_INFINITY));
+        Assertions.assertEquals(Double.POSITIVE_INFINITY,
+                Norms.euclidean(Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY));
+        Assertions.assertEquals(Double.POSITIVE_INFINITY,
+                Norms.euclidean(Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY));
+    }
+
+    @Test
+    void testEuclidean_2d_scaled() {
+        // arrange
+        final double[] ones = new double[] {1, 1};
+        final double[] multiplesOfTen = new double[] {1, 10};
+        final ToDoubleFunction<double[]> fn = v -> Norms.euclidean(v[0], v[1]);
+
+        // act/assert
+        checkScaledEuclideanNorm(ones, 1, fn);
+        checkScaledEuclideanNorm(ones, 0x1.0p500, fn);
+        checkScaledEuclideanNorm(ones, 0x1.0p501, fn);
+        checkScaledEuclideanNorm(ones, 0x1.0p-500, fn);
+        checkScaledEuclideanNorm(ones, 0x1.0p-501, fn);
+
+        checkScaledEuclideanNorm(multiplesOfTen, 1, fn);
+        checkScaledEuclideanNorm(multiplesOfTen, 0x1.0p500, fn);
+        checkScaledEuclideanNorm(multiplesOfTen, 0x1.0p-500, fn);
+    }
+
+    @Test
     void testEuclidean_2d_random() {
         // arrange
         final UniformRandomProvider rng = RandomSource.create(RandomSource.XO_RO_SHI_RO_1024_PP, 1L);
 
         // act/assert
         checkEuclideanRandom(2, rng, v -> Norms.euclidean(v[0], v[1]));
+    }
+
+    @Test
+    void testEuclidean_3d_simple() {
+        // act/assert
+        Assertions.assertEquals(0d, Norms.euclidean(0d, 0d, 0d));
+        Assertions.assertEquals(1d, Norms.euclidean(1d, 0d, 0d));
+        Assertions.assertEquals(1d, Norms.euclidean(0d, 1d, 0d));
+        Assertions.assertEquals(1d, Norms.euclidean(0d, 0d, 1d));
+        Assertions.assertEquals(5 * Math.sqrt(2), Norms.euclidean(-3d, -4d, 5d));
+
+        Assertions.assertEquals(Math.sqrt(3), Norms.euclidean(1d, -1d, 1d));
+
+        Assertions.assertEquals(Double.NaN, Norms.euclidean(-2d, 0d, Double.NaN));
+        Assertions.assertEquals(Double.NaN,
+                Norms.euclidean(Double.POSITIVE_INFINITY, Double.NaN, 1d));
+        Assertions.assertEquals(Double.POSITIVE_INFINITY,
+                Norms.euclidean(Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, 1d));
+        Assertions.assertEquals(Double.POSITIVE_INFINITY,
+                Norms.euclidean(Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY));
+    }
+
+    @Test
+    void testEuclidean_3d_scaled() {
+        // arrange
+        final double[] ones = new double[] {1, 1, 1};
+        final double[] multiplesOfTen = new double[] {1, 10, 100};
+        final ToDoubleFunction<double[]> fn = v -> Norms.euclidean(v[0], v[1], v[2]);
+
+        // act/assert
+        checkScaledEuclideanNorm(ones, 1, fn);
+        checkScaledEuclideanNorm(ones, 0x1.0p500, fn);
+        checkScaledEuclideanNorm(ones, 0x1.0p501, fn);
+        checkScaledEuclideanNorm(ones, 0x1.0p-500, fn);
+        checkScaledEuclideanNorm(ones, 0x1.0p-501, fn);
+
+        checkScaledEuclideanNorm(multiplesOfTen, 1, fn);
+        checkScaledEuclideanNorm(multiplesOfTen, 0x1.0p499, fn);
+        checkScaledEuclideanNorm(multiplesOfTen, 0x1.0p-501, fn);
     }
 
     @Test
@@ -125,14 +202,30 @@ class NormsTest {
         Assertions.assertEquals(directEuclideanNorm(longVec), Norms.euclidean(longVec));
 
         Assertions.assertEquals(Double.NaN, Norms.euclidean(new double[] {-2d, Double.NaN, 1d}));
+        Assertions.assertEquals(Double.NaN,
+                Norms.euclidean(new double[] {Double.POSITIVE_INFINITY, Double.NaN}));
         Assertions.assertEquals(Double.POSITIVE_INFINITY,
                 Norms.euclidean(new double[] {Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY}));
+        Assertions.assertEquals(Double.POSITIVE_INFINITY,
+                Norms.euclidean(new double[] {Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY}));
     }
 
     @Test
-    void testEuclidean_array_edgeCases() {
+    void testEuclidean_array_scaled() {
+        // arrange
+        final double[] ones = new double[] {1, 1, 1, 1};
+        final double[] multiplesOfTen = new double[] {1, 10, 100, 1000};
+
         // act/assert
-        checkScaledEuclideanNorm(new double[] {1, 1, 1}, 0x1.0p100, Norms::euclidean);
+        checkScaledEuclideanNorm(ones, 1, Norms::euclidean);
+        checkScaledEuclideanNorm(ones, 0x1.0p500, Norms::euclidean);
+        checkScaledEuclideanNorm(ones, 0x1.0p501, Norms::euclidean);
+        checkScaledEuclideanNorm(ones, 0x1.0p-500, Norms::euclidean);
+        checkScaledEuclideanNorm(ones, 0x1.0p-501, Norms::euclidean);
+
+        checkScaledEuclideanNorm(multiplesOfTen, 1, Norms::euclidean);
+        checkScaledEuclideanNorm(multiplesOfTen, 0x1.0p498, Norms::euclidean);
+        checkScaledEuclideanNorm(multiplesOfTen, 0x1.0p-502, Norms::euclidean);
     }
 
     @Test
@@ -247,6 +340,9 @@ class NormsTest {
                 final int directUlpError = Math.abs(computeUlpDifference(exact, direct));
                 final int actualUlpError = Math.abs(computeUlpDifference(exact, actual));
 
+                // The ulp error should nearly always be less than or equal to the error from
+                // direct computation. In the small number of cases where it is not, assert that the
+                // actual error is less than a threshold.
                 Assertions.assertTrue(actualUlpError <= directUlpError || (actualUlpError <= MAX_ULP_ERR), () ->
                     "Computed norm error exceeds bounds; vector= " + Arrays.toString(v) +
                     ", exact= " + exact + ", direct= " + direct + ", directUlpError= " + directUlpError +
@@ -255,21 +351,23 @@ class NormsTest {
         }
     }
 
-    /** Assert that {@code |scale * v| = scale * |v|}.
+    /** Assert that {@code directNorm(v) * scale = fn(scale * v)}.
      * @param v unscaled vector
-     * @param scale scaled factor
+     * @param scale scale factor
      * @param fn euclidean norm function
      */
     private static void checkScaledEuclideanNorm(final double[] v, final double scale,
             final ToDoubleFunction<double[]> fn) {
-        final double norm = directEuclideanNorm(v) * scale;
 
         final double[] scaledV = new double[v.length];
         for (int i = 0; i < v.length; ++i) {
             scaledV[i] = v[i] * scale;
         }
 
-        Assertions.assertEquals(norm * scale * v.length, fn.applyAsDouble(scaledV));
+        final double norm = directEuclideanNorm(v);
+        final double scaledNorm = fn.applyAsDouble(scaledV);
+
+        Assertions.assertEquals(norm * scale, scaledNorm);
     }
 
    /** Direct euclidean norm computation.
