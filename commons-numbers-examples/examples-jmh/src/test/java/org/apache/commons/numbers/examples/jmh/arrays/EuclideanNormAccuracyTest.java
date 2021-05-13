@@ -73,10 +73,10 @@ class EuclideanNormAccuracyTest {
         final EuclideanNormEvaluator eval = new EuclideanNormEvaluator(
                 VECTOR_LENGTH, minExp, maxExp, rng);
 
-        eval.addMethod("exact", new EuclideanNorms.Exact())
-            .addMethod("direct", new EuclideanNorms.Direct())
-            .addMethod("enorm", new EuclideanNorms.Enorm())
-            .addMethod("enormMod", new EuclideanNorms.EnormMod());
+        eval.addMethod("exact", new EuclideanNormAlgorithms.Exact())
+            .addMethod("direct", new EuclideanNormAlgorithms.Direct())
+            .addMethod("enorm", new EuclideanNormAlgorithms.Enorm())
+            .addMethod("enormMod", new EuclideanNormAlgorithms.EnormMod());
 
         final EuclideanNormEvaluator.Result result = eval.evaluate(SAMPLE_COUNT);
         writeResults(inputType, result, writer);

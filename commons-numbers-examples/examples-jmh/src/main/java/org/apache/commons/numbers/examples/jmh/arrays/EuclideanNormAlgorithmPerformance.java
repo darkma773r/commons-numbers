@@ -43,7 +43,7 @@ import org.openjdk.jmh.infra.Blackhole;
 @Measurement(iterations = 5, time = 1, timeUnit = TimeUnit.SECONDS)
 @State(Scope.Benchmark)
 @Fork(value = 1, jvmArgs = {"-server", "-Xms512M", "-Xmx512M"})
-public class EuclideanNormPerformance {
+public class EuclideanNormAlgorithmPerformance {
 
     /** Number of samples used in each benchmark. */
     private static final int SAMPLES = 100_000;
@@ -156,7 +156,7 @@ public class EuclideanNormPerformance {
      */
     @Benchmark
     public void exact(final VectorArrayInput input, final Blackhole bh) {
-        eval(new EuclideanNorms.Exact(), input, bh);
+        eval(new EuclideanNormAlgorithms.Exact(), input, bh);
     }
 
     /** Compute the performance of the {@link EuclideanNorms.Direct} class.
@@ -165,7 +165,7 @@ public class EuclideanNormPerformance {
      */
     @Benchmark
     public void direct(final VectorArrayInput input, final Blackhole bh) {
-        eval(new EuclideanNorms.Direct(), input, bh);
+        eval(new EuclideanNormAlgorithms.Direct(), input, bh);
     }
 
     /** Compute the performance of the {@link EuclideanNorms.Enorm} class.
@@ -174,7 +174,7 @@ public class EuclideanNormPerformance {
      */
     @Benchmark
     public void enorm(final VectorArrayInput input, final Blackhole bh) {
-        eval(new EuclideanNorms.Enorm(), input, bh);
+        eval(new EuclideanNormAlgorithms.Enorm(), input, bh);
     }
 
     /** Compute the performance of the {@link EuclideanNorms.EnormMod} class.
@@ -183,6 +183,6 @@ public class EuclideanNormPerformance {
      */
     @Benchmark
     public void enormMod(final VectorArrayInput input, final Blackhole bh) {
-        eval(new EuclideanNorms.EnormMod(), input, bh);
+        eval(new EuclideanNormAlgorithms.EnormMod(), input, bh);
     }
 }

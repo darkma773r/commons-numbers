@@ -22,10 +22,10 @@ import java.util.function.ToDoubleFunction;
 
 /** Class containing various Euclidean norm computation methods for comparison.
  */
-public final class EuclideanNorms {
+public final class EuclideanNormAlgorithms {
 
     /** No instantiation. */
-    private EuclideanNorms() {}
+    private EuclideanNormAlgorithms() {}
 
     /** Exact computation method using {@link BigDecimal} and {@link MathContext#DECIMAL128}.
      */
