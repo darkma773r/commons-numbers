@@ -26,7 +26,7 @@ public final class SafeNorm {
     private static final double R_DWARF = 3.834e-20;
     /** Constant. */
     private static final double R_GIANT = 1.304e+19;
-
+    /** Constant. */
     private static final double R_GIANT_3 = R_GIANT / 3;
 
     /** Private constructor. */
