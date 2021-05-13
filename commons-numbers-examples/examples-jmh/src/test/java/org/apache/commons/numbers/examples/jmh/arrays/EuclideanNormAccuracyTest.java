@@ -22,6 +22,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Map;
 
+import org.apache.commons.numbers.examples.jmh.DoubleUtils;
 import org.apache.commons.rng.UniformRandomProvider;
 import org.apache.commons.rng.simple.RandomSource;
 import org.junit.jupiter.api.Disabled;
@@ -47,59 +48,90 @@ class EuclideanNormAccuracyTest {
     void reportUlpErrors() throws IOException {
         final UniformRandomProvider rng = RandomSource.create(RandomSource.XO_RO_SHI_RO_1024_PP);
 
-        try (BufferedWriter writer = Files.newBufferedWriter(Paths.get("target/norms.csv"))) {
-            writer.write("name, input type, ulp error, std dev, non-finite");
-            writer.newLine();
-
-            evaluate("high", +524, +550, rng, writer);
-            evaluate("mid-high", +490, +510, rng, writer);
-            evaluate("mid", -10, +10, rng, writer);
-            evaluate("mid-low", -510, -490, rng, writer);
-            evaluate("low", -550, -524, rng, writer);
-            evaluate("full", -550, +550, rng, writer);
-        }
-    }
-
-    /** Perform a single evaluation run and write the results to {@code writer}.
-     * @param inputType type of evaluation input
-     * @param minExp minimum double exponent
-     * @param maxExp maximum double exponent
-     * @param rng random number generator
-     * @param writer output writer
-     * @throws IOException if an I/O error occurs
-     */
-    private static void evaluate(final String inputType, final int minExp, final int maxExp,
-            final UniformRandomProvider rng, final BufferedWriter writer) throws IOException {
-        final EuclideanNormEvaluator eval = new EuclideanNormEvaluator(
-                VECTOR_LENGTH, minExp, maxExp, rng);
-
+        final EuclideanNormEvaluator eval = new EuclideanNormEvaluator();
         eval.addMethod("exact", new EuclideanNormAlgorithms.Exact())
             .addMethod("direct", new EuclideanNormAlgorithms.Direct())
             .addMethod("enorm", new EuclideanNormAlgorithms.Enorm())
             .addMethod("enormMod", new EuclideanNormAlgorithms.EnormMod());
 
-        final EuclideanNormEvaluator.Result result = eval.evaluate(SAMPLE_COUNT);
-        writeResults(inputType, result, writer);
+        try (BufferedWriter writer = Files.newBufferedWriter(Paths.get("target/norms.csv"))) {
+            writer.write("name, input type, error mean, error std dev, error min, error max, failed");
+            writer.newLine();
+
+            // construct a baseline array of random vectors
+            final double[][] baseInput = createInputVectors(-10, +10, rng);
+
+            evaluate("high", scaleInputVectors(baseInput, 0x1.0p+530), eval, writer);
+            evaluate("high-thresh", scaleInputVectors(baseInput, 0x1.0p+500), eval, writer);
+            evaluate("mid", baseInput, eval, writer);
+            evaluate("low-thresh", scaleInputVectors(baseInput, 0x1.0p-500), eval, writer);
+            evaluate("low", scaleInputVectors(baseInput, 0x1.0p-530), eval, writer);
+
+            final double[][] fullInput = createInputVectors(-550, +550, rng);
+            evaluate("full", fullInput, eval, writer);
+        }
+    }
+
+    /** Perform a single evaluation run and write the results to {@code writer}.
+     * @param inputType type of evaluation input
+     * @param inputs input vectors
+     * @param eval evaluator
+     * @param writer output writer
+     * @throws IOException if an I/O error occurs
+     */
+    private static void evaluate(final String inputType, final double[][] inputs, final EuclideanNormEvaluator eval,
+            final BufferedWriter writer) throws IOException {
+        final Map<String, EuclideanNormEvaluator.Stats> resultMap = eval.evaluate(inputs);
+        writeResults(inputType, resultMap, writer);
     }
 
     /** Write evaluation results to the given writer instance.
      * @param inputType type of evaluation input
-     * @param result evaluation result
+     * @param statsMap evaluation result map
      * @param writer writer instance
      * @throws IOException if an I/O error occurs
      */
-    private static void writeResults(final String inputType, final EuclideanNormEvaluator.Result result,
+    private static void writeResults(final String inputType, final Map<String, EuclideanNormEvaluator.Stats> resultMap,
             final BufferedWriter writer) throws IOException {
-        for (Map.Entry<String, EuclideanNormEvaluator.Stats> entry : result.getStats().entrySet()) {
+        for (Map.Entry<String, EuclideanNormEvaluator.Stats> entry : resultMap.entrySet()) {
             EuclideanNormEvaluator.Stats stats = entry.getValue();
 
-            writer.write(String.format("%s,%s,%.3g,%.3g,%d",
+            writer.write(String.format("%s,%s,%.3g,%.3g,%.3g,%.3g,%d",
                     entry.getKey(),
                     inputType,
                     stats.getUlpErrorMean(),
                     stats.getUlpErrorStdDev(),
-                    stats.getNonFiniteCount()));
+                    stats.getUlpErrorMin(),
+                    stats.getUlpErrorMax(),
+                    stats.getFailCount()));
             writer.newLine();
         }
+    }
+
+    /** Create an array of random input vectors with exponents in the range {@code [minExp, maxExp]}..
+     * @param minExp minimum exponent
+     * @param maxExp maximum exponent
+     * @param rng random number generator
+     * @return array of random input vectors
+     */
+    private static double[][] createInputVectors(final int minExp, final int maxExp, final UniformRandomProvider rng) {
+        final double[][] input = new double[SAMPLE_COUNT][];
+        for (int i = 0; i < input.length; ++i) {
+            input[i] = DoubleUtils.randomArray(VECTOR_LENGTH, minExp, maxExp, rng);
+        }
+        return input;
+    }
+
+    /** Return a copy of {@code inputs} with each element scaled by {@code s}.
+     * @param inputs input vectors
+     * @param s scale factor
+     * @return copy of {@code inputs} with each element scaled by {@code s}
+     */
+    private static double[][] scaleInputVectors(final double[][] inputs, final double s) {
+        final double[][] scaled = new double[inputs.length][];
+        for (int i = 0; i < inputs.length; ++i) {
+            scaled[i] = DoubleUtils.scalarMultiply(inputs[i], s);
+        }
+        return scaled;
     }
 }

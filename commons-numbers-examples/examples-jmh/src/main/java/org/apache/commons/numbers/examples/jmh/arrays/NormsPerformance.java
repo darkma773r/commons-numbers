@@ -20,6 +20,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.ToDoubleFunction;
 
 import org.apache.commons.numbers.arrays.Norms;
+import org.apache.commons.numbers.examples.jmh.DoubleUtils;
 import org.apache.commons.rng.UniformRandomProvider;
 import org.apache.commons.rng.simple.RandomSource;
 import org.openjdk.jmh.annotations.Benchmark;
@@ -80,8 +81,6 @@ public class NormsPerformance {
 
             vectors = new double[SAMPLES][];
             for (int i = 0; i < vectors.length; ++i) {
-                final double[] v = new double[getLength()];
-
                 // pick a general range for the vector element exponents and then
                 // create values within that range
                 final int vMidExp = rng.nextInt(MAX_EXP - MIN_EXP) + MIN_EXP;
@@ -89,10 +88,7 @@ public class NormsPerformance {
                 final int vMinExp = vMidExp - vExpRadius;
                 final int vMaxExp = vMidExp + vExpRadius;
 
-                for (int j = 0; j < v.length; ++j) {
-                    v[j] = randomDouble(vMinExp, vMaxExp, rng);
-                }
-                vectors[i] = v;
+                vectors[i] = DoubleUtils.randomArray(getLength(), vMinExp, vMaxExp, rng);
             }
         }
 
@@ -116,21 +112,6 @@ public class NormsPerformance {
         }
     }
 
-    /** Create a random double value with exponent in the range {@code [minExp, maxExp]}.
-     * @param minExp minimum exponent value
-     * @param maxExp maximum exponent value
-     * @param rng random number generator
-     * @return random double
-     */
-    private static double randomDouble(final int minExp, final int maxExp, final UniformRandomProvider rng) {
-        // Create random doubles using random bits in the sign bit and the mantissa.
-        final long mask = ((1L << 52) - 1) | 1L << 63;
-        final long bits = rng.nextLong() & mask;
-        // The exponent must be unsigned so + 1023 to the signed exponent
-        final long exp = rng.nextInt(Math.abs(maxExp - minExp)) + minExp + 1023;
-        return Double.longBitsToDouble(bits | (exp << 52));
-    }
-
     /** Evaluate a norm computation method with the given input.
      * @param fn function to evaluate
      * @param input computation input
@@ -144,6 +125,18 @@ public class NormsPerformance {
         }
     }
 
+    /** Compute the Euclidean norm directly with no checks for overflow or underflow.
+     * @param v input vector
+     * @return Euclidean norm
+     */
+    private static double directEuclideanNorm(final double[] v) {
+        double n = 0;
+        for (int i = 0; i < v.length; i++) {
+            n += v[i] * v[i];
+        }
+        return Math.sqrt(n);
+    }
+
     /** Compute a baseline performance metric with a method that does nothing.
      * @param input benchmark input
      * @param bh blackhole
@@ -151,6 +144,16 @@ public class NormsPerformance {
     @Benchmark
     public void baseline(final VectorArrayInput input, final Blackhole bh) {
         eval(v -> 0d, input, bh);
+    }
+
+    /** Compute a baseline performance metric using direct computation of the
+     * Euclidean norm.
+     * @param input benchmark input
+     * @param bh blackhole
+     */
+    @Benchmark
+    public void directEuclideanArray(final VectorArrayInput input, final Blackhole bh) {
+        eval(NormsPerformance::directEuclideanNorm, input, bh);
     }
 
     /** Compute a baseline performance metric using {@link Math#hypot(double, double)}.

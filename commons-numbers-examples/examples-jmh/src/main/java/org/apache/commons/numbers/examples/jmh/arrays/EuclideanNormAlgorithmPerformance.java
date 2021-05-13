@@ -19,6 +19,7 @@ package org.apache.commons.numbers.examples.jmh.arrays;
 import java.util.concurrent.TimeUnit;
 import java.util.function.ToDoubleFunction;
 
+import org.apache.commons.numbers.examples.jmh.DoubleUtils;
 import org.apache.commons.rng.UniformRandomProvider;
 import org.apache.commons.rng.simple.RandomSource;
 import org.openjdk.jmh.annotations.Benchmark;
@@ -113,28 +114,9 @@ public class EuclideanNormAlgorithmPerformance {
 
             vectors = new double[SAMPLES][];
             for (int i = 0; i < vectors.length; ++i) {
-                final double[] v = new double[VECTOR_LEN];
-                for (int j = 0; j < v.length; ++j) {
-                    v[j] = randomDouble(minExp, maxExp, rng);
-                }
-                vectors[i] = v;
+                vectors[i] = DoubleUtils.randomArray(VECTOR_LEN, minExp, maxExp, rng);
             }
         }
-    }
-
-    /** Create a random double value with exponent in the range {@code [minExp, maxExp]}.
-     * @param minExp minimum exponent value
-     * @param maxExp maximum exponent value
-     * @param rng random number generator
-     * @return random double
-     */
-    private static double randomDouble(final int minExp, final int maxExp, final UniformRandomProvider rng) {
-        // Create random doubles using random bits in the sign bit and the mantissa.
-        final long mask = ((1L << 52) - 1) | 1L << 63;
-        final long bits = rng.nextLong() & mask;
-        // The exponent must be unsigned so + 1023 to the signed exponent
-        final long exp = rng.nextInt(Math.abs(maxExp - minExp)) + minExp + 1023;
-        return Double.longBitsToDouble(bits | (exp << 52));
     }
 
     /** Evaluate a norm computation method with the given input.
