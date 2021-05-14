@@ -167,4 +167,13 @@ public class EuclideanNormAlgorithmPerformance {
     public void enormMod(final VectorArrayInput input, final Blackhole bh) {
         eval(new EuclideanNormAlgorithms.EnormMod(), input, bh);
     }
+
+    /** Compute the performance of the {@link EuclideanNorms.EnormModKahan} class.
+     * @param input benchmark input
+     * @param bh blackhole
+     */
+    @Benchmark
+    public void enormModKahan(final VectorArrayInput input, final Blackhole bh) {
+        eval(new EuclideanNormAlgorithms.EnormModKahan(), input, bh);
+    }
 }

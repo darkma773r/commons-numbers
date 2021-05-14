@@ -52,7 +52,8 @@ class EuclideanNormAccuracyTest {
         eval.addMethod("exact", new EuclideanNormAlgorithms.Exact())
             .addMethod("direct", new EuclideanNormAlgorithms.Direct())
             .addMethod("enorm", new EuclideanNormAlgorithms.Enorm())
-            .addMethod("enormMod", new EuclideanNormAlgorithms.EnormMod());
+            .addMethod("enormMod", new EuclideanNormAlgorithms.EnormMod())
+            .addMethod("enormModKahan", new EuclideanNormAlgorithms.EnormModKahan());
 
         try (BufferedWriter writer = Files.newBufferedWriter(Paths.get("target/norms.csv"))) {
             writer.write("name, input type, error mean, error std dev, error min, error max, failed");

@@ -171,4 +171,59 @@ public final class EuclideanNormAlgorithms {
             return x * x;
         }
     }
+
+    /** Version of {@link EnormMod} using Kahan summation.
+     */
+    static final class EnormModKahan implements ToDoubleFunction<double[]> {
+
+        /** {@inheritDoc} */
+        @Override
+        public double applyAsDouble(final double[] v) {
+            // Sum of big, normal and small numbers
+            double s1 = 0;
+            double s2 = 0;
+            double s3 = 0;
+            double c1 = 0;
+            double c2 = 0;
+            double c3 = 0;
+            for (int i = 0; i < v.length; i++) {
+                final double x = Math.abs(v[i]);
+                if (x > 0x1.0p500) {
+                    // Scale down big numbers
+                    final double y = square(x * 0x1.0p-600) - c1;
+                    final double t = s1 + y;
+                    c1 = (t - s1) - y;
+                    s1 = t;
+
+                } else if (x < 0x1.0p-500) {
+                    // Scale up small numbers
+                    final double y = square(x * 0x1.0p600) - c3;
+                    final double t = s3 + y;
+                    c3 = (t - s3) - y;
+                    s3 = t;
+                } else {
+                    // Unscaled
+                    final double y = square(x) - c2;
+                    final double t = s2 + y;
+                    c2 = (t - s2) - y;
+                    s2 = t;
+                }
+            }
+            // The highest sum is the significant component. Add the next significant.
+            if (s1 != 0) {
+                return Math.sqrt(s1 + s2 * 0x1.0p-600 * 0x1.0p-600) * 0x1.0p600;
+            } else if (s2 != 0) {
+                return Math.sqrt(s2 + s3 * 0x1.0p-600 * 0x1.0p-600);
+            }
+            return Math.sqrt(s3) * 0x1.0p-600;
+        }
+
+        /** Compute the square of {@code x}.
+         * @param x input value
+         * @return square of {@code x}
+         */
+        private static double square(final double x) {
+            return x * x;
+        }
+    }
 }

@@ -50,21 +50,31 @@ public class EuclideanNormEvaluator {
 
         final Map<String, StatsAccumulator> accumulators = new HashMap<>();
         for (final String name : methods.keySet()) {
-            accumulators.put(name, new StatsAccumulator(inputs.length));
+            accumulators.put(name, new StatsAccumulator(inputs.length * 2));
         }
 
-        double[] vec;
-        double exact;
-        double sample;
         for (int i = 0; i < inputs.length; ++i) {
-            vec = inputs[i];
+            // compute the norm in a forward and reverse directions to include
+            // summation artifacts
+            final double[] vec = inputs[i];
 
-            exact = computeExact(vec);
+            final double[] reverseVec = new double[vec.length];
+            for (int j = 0; j < vec.length; ++j) {
+                reverseVec[vec.length - 1 - j] = vec[j];
+            }
+
+            final double exact = computeExact(vec);
 
             for (final Map.Entry<String, ToDoubleFunction<double[]>> entry : methods.entrySet()) {
-                sample = entry.getValue().applyAsDouble(vec);
+                final ToDoubleFunction<double[]> fn = entry.getValue();
 
-                accumulators.get(entry.getKey()).report(exact, sample);
+                final StatsAccumulator acc = accumulators.get(entry.getKey());
+
+                final double forwardSample = fn.applyAsDouble(vec);
+                acc.report(exact, forwardSample);
+
+                final double reverseSample = fn.applyAsDouble(reverseVec);
+                acc.report(exact, reverseSample);
             }
         }
 
@@ -226,7 +236,7 @@ public class EuclideanNormEvaluator {
             for (double ulpError : ulpErrors) {
                 if (Double.isFinite(ulpError)) {
                     diff = ulpError - mean;
-                    diffSumSq = diff * diff;
+                    diffSumSq += diff * diff;
                 }
             }
 
