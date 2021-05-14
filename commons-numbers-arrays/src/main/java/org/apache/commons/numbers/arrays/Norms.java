@@ -36,8 +36,8 @@ public final class Norms {
     /** Utility class; no instantiation. */
     private Norms() {}
 
-    /** Compute the Manhattan norm of the argument, also known as the Taxicab norm or L1 norm.
-     * The result is simply the absolute value of the argument.
+    /** Compute the Manhattan norm (also known as the Taxicab norm or L1 norm) of the argument.
+     * The result is equal to \(|x|\), i.e., the absolute value of the argument.
      * @param x input value
      * @return Manhattan norm of {@code x} or NaN if {@code x} is NaN
      * @see <a href="https://en.wikipedia.org/wiki/Norm_(mathematics)#Taxicab_norm_or_Manhattan_norm">Manhattan norm</a>
@@ -46,8 +46,8 @@ public final class Norms {
         return Math.abs(x);
     }
 
-    /** Compute the Manhattan norm of the arguments, also known as the Taxicab norm or L1 norm.
-     * The result is simply the sum of the absolute values of the arguments.
+    /** Compute the Manhattan norm (also known as the Taxicab norm or L1 norm) of the arguments.
+     * The result is equal to \(|x| + |y|\), i.e., the sum of the absolute values of the arguments.
      * @param x first input value
      * @param y second input value
      * @return Manhattan norm or NaN if any input is NaN
@@ -57,8 +57,8 @@ public final class Norms {
         return Math.abs(x) + Math.abs(y);
     }
 
-    /** Compute the Manhattan norm of the arguments, also known as the Taxicab norm or L1 norm.
-     * The result is simply the sum of the absolute values of the arguments.
+    /** Compute the Manhattan norm (also known as the Taxicab norm or L1 norm) of the arguments.
+     * The result is equal to \(|x| + |y| + |z|\), i.e., the sum of the absolute values of the arguments.
      * @param x first input value
      * @param y second input value
      * @param z third input value
@@ -69,10 +69,10 @@ public final class Norms {
         return Math.abs(x) + Math.abs(y) + Math.abs(z);
     }
 
-    /** Compute the Manhattan norm of given values, also known as the Taxicab norm or L1 norm.
-     * The result is simply the sum of the absolute values of the inputs.
+    /** Compute the Manhattan norm (also known as the Taxicab norm or L1 norm) of the given values.
+     * The result is equal to \(|v_0| + ... + |v_i|\), i.e., the sum of the absolute values of the input elements.
      * @param v input values
-     * @return Manhattan norm or NaN if any element is NaN
+     * @return Manhattan norm, NaN if any element is NaN, or 0 if the input array is empty
      * @see <a href="https://en.wikipedia.org/wiki/Norm_(mathematics)#Taxicab_norm_or_Manhattan_norm">Manhattan norm</a>
      */
     public static double manhattan(final double[] v) {
@@ -83,8 +83,8 @@ public final class Norms {
         return s;
     }
 
-    /** Compute the Euclidean norm of the argument, also known as the L2 norm. With a single argument,
-     * this is simply the absolute value of the input.
+    /** Compute the Euclidean norm (also known as the L2 norm) of the argument. In the case of a single argument,
+     * the result is simply the absolute value of the input.
      * @param x input value
      * @return Euclidean norm of {@code x} or NaN if {@code x} is NaN
      * @see <a href="https://en.wikipedia.org/wiki/Norm_(mathematics)#Euclidean_norm">Euclidean norm</a>
@@ -93,6 +93,13 @@ public final class Norms {
         return Math.abs(x);
     }
 
+    /** Compute the Euclidean norm (also known as the L2 norm) of the arguments. The result is equal to
+     * \(\sqrt{x^2 + y^2}\).
+     * @param x first input
+     * @param y second input
+     * @return Euclidean norm of the arguments or NaN if any value is NaN
+     * @see <a href="https://en.wikipedia.org/wiki/Norm_(mathematics)#Euclidean_norm">Euclidean norm</a>
+     */
     public static double euclidean(final double x, final double y) {
         double s1 = 0;
         double s2 = 0;
@@ -119,6 +126,14 @@ public final class Norms {
         return euclideanNormFromScaled(s1, s2, s3);
     }
 
+    /** Compute the Euclidean norm (also known as the L2 norm) of the arguments. The result is equal to
+     * \(\sqrt{x^2 + y^2 + z^2}\).
+     * @param x first input
+     * @param y second input
+     * @param z third input
+     * @return Euclidean norm of the arguments or NaN if any value is NaN
+     * @see <a href="https://en.wikipedia.org/wiki/Norm_(mathematics)#Euclidean_norm">Euclidean norm</a>
+     */
     public static double euclidean(final double x, final double y, final double z) {
         double s1 = 0;
         double s2 = 0;
@@ -154,6 +169,13 @@ public final class Norms {
         return euclideanNormFromScaled(s1, s2, s3);
     }
 
+    /** Compute the Euclidean norm (also known as the L2 norm) of the given values. The result is equal to
+     * \(\sqrt{v_0^2 + ... + v_i^2}\).
+     * @param v input values
+     * @return Euclidean norm of the input values, NaN if any element is NaN, or 0 if the input array
+     *      is empty
+     * @see <a href="https://en.wikipedia.org/wiki/Norm_(mathematics)#Euclidean_norm">Euclidean norm</a>
+     */
     public static double euclidean(final double[] v) {
         // Sum of big, normal and small numbers
         double s1 = 0;
@@ -196,20 +218,48 @@ public final class Norms {
         return Math.sqrt(s3) * SCALE_DOWN;
     }
 
+    /** Compute the maximum norm (also known as the infinity norm or L<sub>inf</sub> norm) of the argument.
+     * The result is equal to \(|x|\), (i.e. the absolute value of the argument).
+     * @param x input value
+     * @return the maximum norm of {@code x} or NaN if {@code x} is NaN
+     * @see <a href="https://en.wikipedia.org/wiki/Norm_(mathematics)#Maximum_norm_(special_case_of:_infinity_norm,_uniform_norm,_or_supremum_norm)">Maximum norm</a>
+     */
     public static double maximum(final double x) {
         return Math.abs(x);
     }
 
+    /** Compute the maximum norm (also known as the infinity norm or L<sub>inf</sub> norm) of the arguments.
+     * The result is equal to \(\max{(|x|, |y|)}\), i.e., the maximum of the absolute values of the arguments.
+     * @param x first input
+     * @param y second input
+     * @return the maximum norm of the arguments or NaN if any value is NaN
+     * @see <a href="https://en.wikipedia.org/wiki/Norm_(mathematics)#Maximum_norm_(special_case_of:_infinity_norm,_uniform_norm,_or_supremum_norm)">Maximum norm</a>
+     */
     public static double maximum(final double x, final double y) {
         return Math.max(Math.abs(x), Math.abs(y));
     }
 
+    /** Compute the maximum norm (also known as the infinity norm or L<sub>inf</sub> norm) of the arguments.
+     * The result is equal to \(\max{(|x|, |y|, |z|)}\), i.e., the maximum of the absolute values of the arguments.
+     * @param x first input
+     * @param y second input
+     * @param z third input
+     * @return the maximum norm of the arguments or NaN if any value is NaN
+     * @see <a href="https://en.wikipedia.org/wiki/Norm_(mathematics)#Maximum_norm_(special_case_of:_infinity_norm,_uniform_norm,_or_supremum_norm)">Maximum norm</a>
+     */
     public static double maximum(final double x, final double y, final double z) {
         return Math.max(
                 Math.abs(x),
                 Math.max(Math.abs(y), Math.abs(z)));
     }
 
+    /** Compute the maximum norm (also known as the infinity norm or L<sub>inf</sub> norm) of the given values.
+     * The result is equal to \(\max{(|v_0|, ... |v_i|)}\), i.e., the maximum of the absolute values of the
+     * input elements.
+     * @param v input values
+     * @return the maximum norm of the inputs, NaN if any value is NaN, or 0 if the input array is empty
+     * @see <a href="https://en.wikipedia.org/wiki/Norm_(mathematics)#Maximum_norm_(special_case_of:_infinity_norm,_uniform_norm,_or_supremum_norm)">Maximum norm</a>
+     */
     public static double maximum(final double[] v) {
         double max = 0d;
         for (int i = 0; i < v.length; ++i) {

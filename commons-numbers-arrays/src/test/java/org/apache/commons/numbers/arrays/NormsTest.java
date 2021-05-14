@@ -107,6 +107,8 @@ class NormsTest {
         Assertions.assertEquals(Double.NaN,
                 Norms.euclidean(Double.NaN, Double.NEGATIVE_INFINITY));
         Assertions.assertEquals(Double.POSITIVE_INFINITY,
+                Norms.euclidean(1d, Double.NEGATIVE_INFINITY));
+        Assertions.assertEquals(Double.POSITIVE_INFINITY,
                 Norms.euclidean(Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY));
         Assertions.assertEquals(Double.POSITIVE_INFINITY,
                 Norms.euclidean(Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY));
