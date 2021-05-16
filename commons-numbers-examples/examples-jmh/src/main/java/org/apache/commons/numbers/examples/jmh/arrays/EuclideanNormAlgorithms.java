@@ -176,6 +176,18 @@ public final class EuclideanNormAlgorithms {
      */
     static final class EnormModKahan implements ToDoubleFunction<double[]> {
 
+        /** Threshold for scaling small numbers. */
+        private static final double SMALL_THRESH = 0x1.0p-500;
+
+        /** Threshold for scaling large numbers. */
+        private static final double LARGE_THRESH = 0x1.0p+500;
+
+        /** Value used to scale down large numbers. */
+        private static final double SCALE_DOWN = 0x1.0p-600;
+
+        /** Value used to scale up small numbers. */
+        private static final double SCALE_UP = 0x1.0p+600;
+
         /** {@inheritDoc} */
         @Override
         public double applyAsDouble(final double[] v) {
@@ -188,16 +200,16 @@ public final class EuclideanNormAlgorithms {
             double c3 = 0;
             for (int i = 0; i < v.length; i++) {
                 final double x = Math.abs(v[i]);
-                if (x > 0x1.0p500) {
+                if (x > LARGE_THRESH) {
                     // Scale down big numbers
-                    final double y = square(x * 0x1.0p-600) - c1;
+                    final double y = square(x * SCALE_DOWN) - c1;
                     final double t = s1 + y;
                     c1 = (t - s1) - y;
                     s1 = t;
 
-                } else if (x < 0x1.0p-500) {
+                } else if (x < SMALL_THRESH) {
                     // Scale up small numbers
-                    final double y = square(x * 0x1.0p600) - c3;
+                    final double y = square(x * SCALE_UP) - c3;
                     final double t = s3 + y;
                     c3 = (t - s3) - y;
                     s3 = t;
@@ -210,12 +222,21 @@ public final class EuclideanNormAlgorithms {
                 }
             }
             // The highest sum is the significant component. Add the next significant.
+            // Add the scaled compensation then the scaled sum.
             if (s1 != 0) {
-                return Math.sqrt(s1 + s2 * 0x1.0p-600 * 0x1.0p-600) * 0x1.0p600;
+                double y = c2 * SCALE_DOWN * SCALE_DOWN - c1;
+                final double t = s1 + y;
+                c1 = (t - s1) - y;
+                y = s2 * SCALE_DOWN * SCALE_DOWN - c1;
+                return Math.sqrt(t + y) * SCALE_UP;
             } else if (s2 != 0) {
-                return Math.sqrt(s2 + s3 * 0x1.0p-600 * 0x1.0p-600);
+                double y = c3 * SCALE_DOWN * SCALE_DOWN - c2;
+                final double t = s2 + y;
+                c2 = (t - s2) - y;
+                y = s3 * SCALE_DOWN * SCALE_DOWN - c2;
+                return Math.sqrt(t + y);
             }
-            return Math.sqrt(s3) * 0x1.0p-600;
+            return Math.sqrt(s3) * SCALE_DOWN;
         }
 
         /** Compute the square of {@code x}.
@@ -224,6 +245,51 @@ public final class EuclideanNormAlgorithms {
          */
         private static double square(final double x) {
             return x * x;
+        }
+    }
+
+    /** Euclidean norm computation algorithm that uses {@link LinearCombinations} to perform
+     * an extended precision summation.
+     */
+    static final class ExtendedPrecisionLinearCombination implements ToDoubleFunction<double[]> {
+
+        /** {@inheritDoc} */
+        @Override
+        public double applyAsDouble(final double[] v) {
+         // Find the magnitude limits ignoring zero
+            double max = 0;
+            double min = Double.POSITIVE_INFINITY;
+            for (int i = 0; i < v.length; i++) {
+                final double x = Math.abs(v[i]);
+                if (x > max) {
+                    max = x;
+                } else if (x < min && x != 0) {
+                    min = x;
+                }
+            }
+            // Edge case
+            if (max == 0) {
+                return 0;
+            }
+            // Use scaling if required
+            double[] x = v;
+            double rescale = 1;
+            if (max > 0x1.0p500) {
+                // Too big so scale down
+                x = x.clone();
+                for (int i = 0; i < x.length; i++) {
+                    x[i] *= 0x1.0p-600;
+                }
+                rescale = 0x1.0p600;
+            } else if (min < 0x1.0p-500) {
+                // Too small so scale up
+                x = x.clone();
+                for (int i = 0; i < x.length; i++) {
+                    x[i] *= 0x1.0p600;
+                }
+                rescale = 0x1.0p-600;
+            }
+            return Math.sqrt(org.apache.commons.numbers.arrays.LinearCombination.value(x, x)) * rescale;
         }
     }
 }

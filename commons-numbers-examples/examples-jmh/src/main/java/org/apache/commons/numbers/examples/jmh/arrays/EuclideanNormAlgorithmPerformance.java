@@ -46,11 +46,11 @@ import org.openjdk.jmh.infra.Blackhole;
 @Fork(value = 1, jvmArgs = {"-server", "-Xms512M", "-Xmx512M"})
 public class EuclideanNormAlgorithmPerformance {
 
-    /** Number of samples used in each benchmark. */
-    private static final int SAMPLES = 100_000;
+    /** Default number of samples used in each benchmark. */
+    private static final int DEFAULT_SAMPLES = 100_000;
 
-    /** Length of vector used in the benchmarks. */
-    private static final int VECTOR_LEN = 3;
+    /** Default length of vectors used in the benchmarks. */
+    private static final int DEFAULT_VECTOR_LEN = 100;
 
     /** String indicating double exponents with very low negative values, likely to underflow. */
     private static final String LOW = "low";
@@ -69,6 +69,14 @@ public class EuclideanNormAlgorithmPerformance {
      */
     @State(Scope.Benchmark)
     public static class VectorArrayInput {
+
+        /** The number of samples. */
+        @Param(DEFAULT_SAMPLES + "")
+        private int samples;
+
+        /** The length of each vector. */
+        @Param(DEFAULT_VECTOR_LEN + "")
+        private int vectorLength;
 
         /** The type of double values placed in the vector arrays. */
         @Param({LOW, MID, HIGH, FULL})
@@ -112,9 +120,9 @@ public class EuclideanNormAlgorithmPerformance {
                 break;
             }
 
-            vectors = new double[SAMPLES][];
+            vectors = new double[samples][];
             for (int i = 0; i < vectors.length; ++i) {
-                vectors[i] = DoubleUtils.randomArray(VECTOR_LEN, minExp, maxExp, rng);
+                vectors[i] = DoubleUtils.randomArray(vectorLength, minExp, maxExp, rng);
             }
         }
     }
@@ -132,7 +140,7 @@ public class EuclideanNormAlgorithmPerformance {
         }
     }
 
-    /** Compute the performance of the {@link EuclideanNorms.Exact} class.
+    /** Compute the performance of the {@link EuclideanNormAlgorithms.Exact} class.
      * @param input benchmark input
      * @param bh blackhole
      */
@@ -141,7 +149,7 @@ public class EuclideanNormAlgorithmPerformance {
         eval(new EuclideanNormAlgorithms.Exact(), input, bh);
     }
 
-    /** Compute the performance of the {@link EuclideanNorms.Direct} class.
+    /** Compute the performance of the {@link EuclideanNormAlgorithms.Direct} class.
      * @param input benchmark input
      * @param bh blackhole
      */
@@ -150,7 +158,7 @@ public class EuclideanNormAlgorithmPerformance {
         eval(new EuclideanNormAlgorithms.Direct(), input, bh);
     }
 
-    /** Compute the performance of the {@link EuclideanNorms.Enorm} class.
+    /** Compute the performance of the {@link EuclideanNormAlgorithms.Enorm} class.
      * @param input benchmark input
      * @param bh blackhole
      */
@@ -159,7 +167,7 @@ public class EuclideanNormAlgorithmPerformance {
         eval(new EuclideanNormAlgorithms.Enorm(), input, bh);
     }
 
-    /** Compute the performance of the {@link EuclideanNorms.EnormMod} class.
+    /** Compute the performance of the {@link EuclideanNormAlgorithms.EnormMod} class.
      * @param input benchmark input
      * @param bh blackhole
      */
@@ -168,12 +176,21 @@ public class EuclideanNormAlgorithmPerformance {
         eval(new EuclideanNormAlgorithms.EnormMod(), input, bh);
     }
 
-    /** Compute the performance of the {@link EuclideanNorms.EnormModKahan} class.
+    /** Compute the performance of the {@link EuclideanNormAlgorithms.EnormModKahan} class.
      * @param input benchmark input
      * @param bh blackhole
      */
     @Benchmark
     public void enormModKahan(final VectorArrayInput input, final Blackhole bh) {
         eval(new EuclideanNormAlgorithms.EnormModKahan(), input, bh);
+    }
+
+    /** Compute the performance of the {@link EuclideanNormAlgorithms.ExtendedPrecisionLinearCombination} class.
+     * @param input benchmark input
+     * @param bh blackhole
+     */
+    @Benchmark
+    public void extLinear(final VectorArrayInput input, final Blackhole bh) {
+        eval(new EuclideanNormAlgorithms.ExtendedPrecisionLinearCombination(), input, bh);
     }
 }

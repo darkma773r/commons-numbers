@@ -34,7 +34,7 @@ import org.junit.jupiter.api.Test;
 class EuclideanNormAccuracyTest {
 
     /** Length of vectors to compute norms for. */
-    private static final int VECTOR_LENGTH = 3;
+    private static final int VECTOR_LENGTH = 100;
 
     /** Number of samples per evaluation. */
     private static final int SAMPLE_COUNT = 100_000;
@@ -53,7 +53,8 @@ class EuclideanNormAccuracyTest {
             .addMethod("direct", new EuclideanNormAlgorithms.Direct())
             .addMethod("enorm", new EuclideanNormAlgorithms.Enorm())
             .addMethod("enormMod", new EuclideanNormAlgorithms.EnormMod())
-            .addMethod("enormModKahan", new EuclideanNormAlgorithms.EnormModKahan());
+            .addMethod("enormModKahan", new EuclideanNormAlgorithms.EnormModKahan())
+            .addMethod("extLinear", new EuclideanNormAlgorithms.ExtendedPrecisionLinearCombination());
 
         try (BufferedWriter writer = Files.newBufferedWriter(Paths.get("target/norms.csv"))) {
             writer.write("name, input type, error mean, error std dev, error min, error max, failed");
