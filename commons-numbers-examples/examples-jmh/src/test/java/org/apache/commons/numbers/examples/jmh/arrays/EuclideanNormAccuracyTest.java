@@ -23,6 +23,7 @@ import java.nio.file.Paths;
 import java.util.Map;
 
 import org.apache.commons.numbers.examples.jmh.DoubleUtils;
+import org.apache.commons.numbers.examples.jmh.arrays.EuclideanNormAlgorithms.EnormModExt;
 import org.apache.commons.rng.UniformRandomProvider;
 import org.apache.commons.rng.simple.RandomSource;
 import org.junit.jupiter.api.Disabled;
@@ -39,6 +40,42 @@ class EuclideanNormAccuracyTest {
     /** Number of samples per evaluation. */
     private static final int SAMPLE_COUNT = 100_000;
 
+    @Test
+    void test() throws Exception {
+        final UniformRandomProvider rng = RandomSource.create(RandomSource.XO_RO_SHI_RO_1024_PP, 0L);
+
+        final EuclideanNormEvaluator eval = new EuclideanNormEvaluator();
+        eval.addMethod("direct", new EuclideanNormAlgorithms.Direct())
+            .addMethod("enorm", new EuclideanNormAlgorithms.Enorm())
+            .addMethod("enormMod", new EuclideanNormAlgorithms.EnormMod())
+            .addMethod("enormModKahan", new EuclideanNormAlgorithms.EnormModKahan())
+            .addMethod("enormModExt", new EuclideanNormAlgorithms.EnormModExt())
+            .addMethod("extLinear", new EuclideanNormAlgorithms.ExtendedPrecisionLinearCombination());
+
+        final int samples = 1000;
+        final int[] lengths = {1, 2, 3, 4, 5, 10, 20, 30, 40, 50, 75, 100};
+        for (int len : lengths) {
+            System.out.println("Samples= " + samples);
+            System.out.println("Len= " + len);
+            System.out.println("StdDevs");
+
+            final double[][] input = randomVector(samples, len, rng);
+            for (Map.Entry<String, EuclideanNormEvaluator.Stats> entry : eval.evaluate(input).entrySet()) {
+                System.out.println("    " + entry.getKey() + "= " + entry.getValue().getUlpErrorStdDev());
+            }
+
+            System.out.println();
+        }
+    }
+
+    private static double[][] randomVector(final int samples, final int len, final UniformRandomProvider rng) {
+        final double[][] input = new double[samples][];
+        for (int i = 0; i < input.length; ++i) {
+            input[i] = DoubleUtils.randomArray(len, -10, +10, rng);
+        }
+        return input;
+    }
+
     /** Report the relative error of various Euclidean norm computation methods and write
      * the results to a csv file. This is not a test.
      * @throws IOException if an I/O error occurs
@@ -54,6 +91,7 @@ class EuclideanNormAccuracyTest {
             .addMethod("enorm", new EuclideanNormAlgorithms.Enorm())
             .addMethod("enormMod", new EuclideanNormAlgorithms.EnormMod())
             .addMethod("enormModKahan", new EuclideanNormAlgorithms.EnormModKahan())
+            .addMethod("enormModExt", new EuclideanNormAlgorithms.EnormModExt())
             .addMethod("extLinear", new EuclideanNormAlgorithms.ExtendedPrecisionLinearCombination());
 
         try (BufferedWriter writer = Files.newBufferedWriter(Paths.get("target/norms.csv"))) {

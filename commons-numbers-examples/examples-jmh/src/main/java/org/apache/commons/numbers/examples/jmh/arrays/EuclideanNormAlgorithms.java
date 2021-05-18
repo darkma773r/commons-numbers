@@ -248,6 +248,83 @@ public final class EuclideanNormAlgorithms {
         }
     }
 
+    /** Version of {@link EnormMod} using extended precision summation.
+     */
+    static final class EnormModExt implements ToDoubleFunction<double[]> {
+
+        /** Threshold for scaling small numbers. */
+        private static final double SMALL_THRESH = 0x1.0p-500;
+
+        /** Threshold for scaling large numbers. */
+        private static final double LARGE_THRESH = 0x1.0p+500;
+
+        /** Value used to scale down large numbers. */
+        private static final double SCALE_DOWN = 0x1.0p-600;
+
+        /** Value used to scale up small numbers. */
+        private static final double SCALE_UP = 0x1.0p+600;
+
+        /** {@inheritDoc} */
+        @Override
+        public double applyAsDouble(final double[] v) {
+            // Sum of big, normal and small numbers with 2-fold extended precision summation
+            double s1 = 0;
+            double s2 = 0;
+            double s3 = 0;
+            double c1 = 0;
+            double c2 = 0;
+            double c3 = 0;
+            for (int i = 0; i < v.length; i++) {
+                final double x = Math.abs(v[i]);
+                if (x > LARGE_THRESH) {
+                    // Scale down big numbers
+                    final double y = square(x * SCALE_DOWN) + c1;
+                    final double t = s1 + y;
+                    c1 = DoublePrecision.twoSumLow(s1, y, t);
+                    s1 = t;
+                } else if (x < SMALL_THRESH) {
+                    // Scale up small numbers
+                    final double y = square(x * SCALE_UP) + c3;
+                    final double t = s3 + y;
+                    c3 = DoublePrecision.twoSumLow(s3, y, t);
+                    s3 = t;
+                } else {
+                    // Unscaled
+                    final double y = square(x) + c2;
+                    final double t = s2 + y;
+                    c2 = DoublePrecision.twoSumLow(s2, y, t);
+                    s2 = t;
+                }
+            }
+            // The highest sum is the significant component. Add the next significant.
+            // Adapted from LinearCombination dot2s summation.
+            if (s1 != 0) {
+                s2 = s2 * SCALE_DOWN * SCALE_DOWN;
+                c2 = c2 * SCALE_DOWN * SCALE_DOWN;
+                final double sum = s1 + s2;
+                // Add the round-off from the main sum to the other round-off components
+                c1 += DoublePrecision.twoSumLow(s1, s2, sum) + c2;
+                return Math.sqrt(sum + c1) * SCALE_UP;
+            } else if (s2 != 0) {
+                s3 = s3 * SCALE_DOWN * SCALE_DOWN;
+                c3 = c3 * SCALE_DOWN * SCALE_DOWN;
+                final double sum = s2 + s3;
+                // Add the round-off from the main sum to the other round-off components
+                c2 += DoublePrecision.twoSumLow(s2, s3, sum) + c3;
+                return Math.sqrt(sum + c2);
+            }
+            return Math.sqrt(s3) * SCALE_DOWN;
+        }
+
+        /** Compute the square of {@code x}.
+         * @param x input value
+         * @return square of {@code x}
+         */
+        private static double square(final double x) {
+            return x * x;
+        }
+    }
+
     /** Euclidean norm computation algorithm that uses {@link LinearCombinations} to perform
      * an extended precision summation.
      */
