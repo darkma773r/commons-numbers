@@ -50,7 +50,8 @@ class EuclideanNormAccuracyTest {
             .addMethod("enormMod", new EuclideanNormAlgorithms.EnormMod())
             .addMethod("enormModKahan", new EuclideanNormAlgorithms.EnormModKahan())
             .addMethod("enormModExt", new EuclideanNormAlgorithms.EnormModExt())
-            .addMethod("extLinear", new EuclideanNormAlgorithms.ExtendedPrecisionLinearCombination());
+            .addMethod("extLinear", new EuclideanNormAlgorithms.ExtendedPrecisionLinearCombination())
+            .addMethod("extLinearMod", new EuclideanNormAlgorithms.ExtendedPrecisionLinearCombinationMod());
 
         final int samples = 1000;
         final int[] lengths = {1, 2, 3, 4, 5, 10, 20, 30, 40, 50, 75, 100};
@@ -81,7 +82,7 @@ class EuclideanNormAccuracyTest {
      * @throws IOException if an I/O error occurs
      */
     @Test
-    @Disabled("This method is used to output a report of the accuracy of implementations.")
+//    @Disabled("This method is used to output a report of the accuracy of implementations.")
     void reportUlpErrors() throws IOException {
         final UniformRandomProvider rng = RandomSource.create(RandomSource.XO_RO_SHI_RO_1024_PP);
 
@@ -92,7 +93,8 @@ class EuclideanNormAccuracyTest {
             .addMethod("enormMod", new EuclideanNormAlgorithms.EnormMod())
             .addMethod("enormModKahan", new EuclideanNormAlgorithms.EnormModKahan())
             .addMethod("enormModExt", new EuclideanNormAlgorithms.EnormModExt())
-            .addMethod("extLinear", new EuclideanNormAlgorithms.ExtendedPrecisionLinearCombination());
+            .addMethod("extLinear", new EuclideanNormAlgorithms.ExtendedPrecisionLinearCombination())
+            .addMethod("extLinearMod", new EuclideanNormAlgorithms.ExtendedPrecisionLinearCombinationMod());
 
         try (BufferedWriter writer = Files.newBufferedWriter(Paths.get("target/norms.csv"))) {
             writer.write("name, input type, error mean, error std dev, error min, error max, failed");

@@ -137,13 +137,15 @@ public final class EuclideanNormAlgorithms {
         /** {@inheritDoc} */
         @Override
         public double applyAsDouble(final double[] v) {
-            // Sum of big, normal and small numbers
+            // Sum of big, normal and small numbers with 2-fold extended precision summation
             double s1 = 0;
             double s2 = 0;
             double s3 = 0;
             for (int i = 0; i < v.length; i++) {
                 final double x = Math.abs(v[i]);
-                if (x > 0x1.0p500) {
+                if (!(x <= Double.MAX_VALUE)) {
+                    return x;
+                } else if (x > 0x1.0p500) {
                     // Scale down big numbers
                     s1 += square(x * 0x1.0p-600);
                 } else if (x < 0x1.0p-500) {
@@ -267,7 +269,7 @@ public final class EuclideanNormAlgorithms {
         /** {@inheritDoc} */
         @Override
         public double applyAsDouble(final double[] v) {
-            // Sum of big, normal and small numbers with 2-fold extended precision summation
+         // Sum of big, normal and small numbers with 2-fold extended precision summation
             double s1 = 0;
             double s2 = 0;
             double s3 = 0;
@@ -276,23 +278,25 @@ public final class EuclideanNormAlgorithms {
             double c3 = 0;
             for (int i = 0; i < v.length; i++) {
                 final double x = Math.abs(v[i]);
-                if (x > LARGE_THRESH) {
+                if (!(x <= Double.MAX_VALUE)) {
+                    return x;
+                } else if (x > LARGE_THRESH) {
                     // Scale down big numbers
-                    final double y = square(x * SCALE_DOWN) + c1;
+                    final double y = square(x * SCALE_DOWN);
                     final double t = s1 + y;
-                    c1 = DoublePrecision.twoSumLow(s1, y, t);
+                    c1 += DoublePrecision.twoSumLow(s1, y, t);
                     s1 = t;
                 } else if (x < SMALL_THRESH) {
                     // Scale up small numbers
-                    final double y = square(x * SCALE_UP) + c3;
+                    final double y = square(x * SCALE_UP);
                     final double t = s3 + y;
-                    c3 = DoublePrecision.twoSumLow(s3, y, t);
+                    c3 += DoublePrecision.twoSumLow(s3, y, t);
                     s3 = t;
                 } else {
                     // Unscaled
-                    final double y = square(x) + c2;
+                    final double y = square(x);
                     final double t = s2 + y;
-                    c2 = DoublePrecision.twoSumLow(s2, y, t);
+                    c2 += DoublePrecision.twoSumLow(s2, y, t);
                     s2 = t;
                 }
             }
@@ -301,15 +305,13 @@ public final class EuclideanNormAlgorithms {
             if (s1 != 0) {
                 s2 = s2 * SCALE_DOWN * SCALE_DOWN;
                 c2 = c2 * SCALE_DOWN * SCALE_DOWN;
-                final double sum = s1 + s2;
-                // Add the round-off from the main sum to the other round-off components
+                double sum = s1 + s2;
                 c1 += DoublePrecision.twoSumLow(s1, s2, sum) + c2;
                 return Math.sqrt(sum + c1) * SCALE_UP;
             } else if (s2 != 0) {
                 s3 = s3 * SCALE_DOWN * SCALE_DOWN;
                 c3 = c3 * SCALE_DOWN * SCALE_DOWN;
-                final double sum = s2 + s3;
-                // Add the round-off from the main sum to the other round-off components
+                double sum = s2 + s3;
                 c2 += DoublePrecision.twoSumLow(s2, s3, sum) + c3;
                 return Math.sqrt(sum + c2);
             }
@@ -333,20 +335,22 @@ public final class EuclideanNormAlgorithms {
         /** {@inheritDoc} */
         @Override
         public double applyAsDouble(final double[] v) {
-         // Find the magnitude limits ignoring zero
+            // Find the magnitude limits ignoring zero
             double max = 0;
             double min = Double.POSITIVE_INFINITY;
             for (int i = 0; i < v.length; i++) {
                 final double x = Math.abs(v[i]);
-                if (x > max) {
+                if (Double.isNaN(x)) {
+                    return x;
+                } else if (x > max) {
                     max = x;
                 } else if (x < min && x != 0) {
                     min = x;
                 }
             }
-            // Edge case
-            if (max == 0) {
-                return 0;
+            // Edge cases
+            if (max == 0 || max == Double.POSITIVE_INFINITY) {
+                return max;
             }
             // Use scaling if required
             double[] x = v;
@@ -368,5 +372,108 @@ public final class EuclideanNormAlgorithms {
             }
             return Math.sqrt(org.apache.commons.numbers.arrays.LinearCombination.value(x, x)) * rescale;
         }
+    }
+
+    /** Modification of {@link ExtendedPrecisionLinearCombination} that uses an optimized version of the
+     * linear combination computation.
+     */
+    static final class ExtendedPrecisionLinearCombinationMod implements ToDoubleFunction<double[]> {
+
+        /** Threshold for scaling small numbers. */
+        private static final double SMALL_THRESH = 0x1.0p-500;
+
+        /** Threshold for scaling large numbers. */
+        private static final double LARGE_THRESH = 0x1.0p+500;
+
+        /** Value used to scale down large numbers. */
+        private static final double SCALE_DOWN = 0x1.0p-600;
+
+        /** Value used to scale up small numbers. */
+        private static final double SCALE_UP = 0x1.0p+600;
+
+        /** {@inheritDoc} */
+        @Override
+        public double applyAsDouble(final double[] v) {
+            // Find the magnitude limits ignoring zero
+            double max = 0;
+            double min = Double.POSITIVE_INFINITY;
+            for (int i = 0; i < v.length; i++) {
+                final double x = Math.abs(v[i]);
+                if (Double.isNaN(x)) {
+                    return x;
+                } else if (x > max) {
+                    max = x;
+                } else if (x < min && x != 0) {
+                    min = x;
+                }
+            }
+            // Edge cases
+            if (max == 0 || max == Double.POSITIVE_INFINITY) {
+                return max;
+            }
+
+            // Below here no value is infinite or NaN.
+
+            // Use scaling if required
+            double scale = 1;
+            double rescale = 1;
+            if (max > LARGE_THRESH) {
+                // Too big so scale down
+                scale = SCALE_DOWN;
+                rescale = SCALE_UP;
+            } else if (min < SMALL_THRESH) {
+                // Too small so scale up
+                scale = SCALE_UP;
+                rescale = SCALE_DOWN;
+            }
+
+            // Same as LinearCombination but with scaling.
+            // Splitting is safe due to scaling and only one term requires splitting.
+
+            // Implement dot2s (Algorithm 5.4) from Ogita et al (2005).
+            final int len = v.length;
+
+            // p is the standard scalar product sum.
+            // s is the sum of round-off parts.
+            double a = v[0] * scale;
+            double p = a * a;
+            double s = productLowUnscaled(a, p);
+
+            // Remaining split products added to the current sum and round-off sum.
+            for (int i = 1; i < len; i++) {
+                a = v[i] * scale;
+                final double h = a * a;
+                final double r = productLowUnscaled(a, h);
+
+                final double x = p + h;
+                // s_i = s_(i-1) + (q_i + r_i)
+                s += DoublePrecision.twoSumLow(p, h, x) + r;
+                p = x;
+            }
+            p += s;
+
+            return Math.sqrt(p) * rescale;
+        }
+
+        /**
+         * Compute the low part of the double length number {@code (z,zz)} for the exact
+         * square of {@code x} using Dekker's mult12 algorithm. The standard
+         * precision product {@code x*x} must be provided. The number {@code x}
+         * is split into high and low parts using Dekker's algorithm.
+         *
+         * <p>Warning: This method does not perform scaling in Dekker's split and large
+         * finite numbers can create NaN results.
+         *
+         * @param x The factor.
+         * @param xx Square of the factor (x * x).
+         * @return the low part of the product double length number
+         */
+       private static double productLowUnscaled(double x, double xx) {
+           // Split the numbers using Dekker's algorithm without scaling
+           final double hx = DoublePrecision.highPartUnscaled(x);
+           final double lx = x - hx;
+
+           return DoublePrecision.productLow(hx, lx, hx, lx, xx);
+       }
     }
 }
