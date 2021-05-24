@@ -212,4 +212,14 @@ public class EuclideanNormAlgorithmPerformance {
     public void extLinearMod(final VectorArrayInput input, final Blackhole bh) {
         eval(new EuclideanNormAlgorithms.ExtendedPrecisionLinearCombinationMod(), input, bh);
     }
+
+    /** Compute the performance of the {@link EuclideanNormAlgorithms.ExtendedPrecisionLinearCombinationSinglePass}
+     * class.
+     * @param input benchmark input
+     * @param bh blackhole
+     */
+    @Benchmark
+    public void extLinearSinglePass(final VectorArrayInput input, final Blackhole bh) {
+        eval(new EuclideanNormAlgorithms.ExtendedPrecisionLinearCombinationSinglePass(), input, bh);
+    }
 }

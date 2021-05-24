@@ -362,7 +362,7 @@ public final class EuclideanNormAlgorithms {
                     x[i] *= 0x1.0p-600;
                 }
                 rescale = 0x1.0p600;
-            } else if (min < 0x1.0p-500) {
+            } else if (min < 0x1.0p-500 && max < 0x1.0p100) {
                 // Too small so scale up
                 x = x.clone();
                 for (int i = 0; i < x.length; i++) {
@@ -421,7 +421,7 @@ public final class EuclideanNormAlgorithms {
                 // Too big so scale down
                 scale = SCALE_DOWN;
                 rescale = SCALE_UP;
-            } else if (min < SMALL_THRESH) {
+            } else if (min < SMALL_THRESH && max < 0x1.0p100) {
                 // Too small so scale up
                 scale = SCALE_UP;
                 rescale = SCALE_DOWN;
@@ -453,6 +453,124 @@ public final class EuclideanNormAlgorithms {
             p += s;
 
             return Math.sqrt(p) * rescale;
+        }
+
+        /**
+         * Compute the low part of the double length number {@code (z,zz)} for the exact
+         * square of {@code x} using Dekker's mult12 algorithm. The standard
+         * precision product {@code x*x} must be provided. The number {@code x}
+         * is split into high and low parts using Dekker's algorithm.
+         *
+         * <p>Warning: This method does not perform scaling in Dekker's split and large
+         * finite numbers can create NaN results.
+         *
+         * @param x The factor.
+         * @param xx Square of the factor (x * x).
+         * @return the low part of the product double length number
+         */
+       private static double productLowUnscaled(double x, double xx) {
+           // Split the numbers using Dekker's algorithm without scaling
+           final double hx = DoublePrecision.highPartUnscaled(x);
+           final double lx = x - hx;
+
+           return DoublePrecision.productLow(hx, lx, hx, lx, xx);
+       }
+    }
+
+    /** Modification of {@link ExtendedPrecisionLinearCombination} that only uses a single pass through
+     * the input array.
+     */
+    static final class ExtendedPrecisionLinearCombinationSinglePass implements ToDoubleFunction<double[]> {
+
+        /** Threshold for scaling small numbers. */
+        private static final double SMALL_THRESH = 0x1.0p-500;
+
+        /** Threshold for scaling large numbers. */
+        private static final double LARGE_THRESH = 0x1.0p+500;
+
+        /** Value used to scale down large numbers. */
+        private static final double SCALE_DOWN = 0x1.0p-600;
+
+        /** Value used to scale up small numbers. */
+        private static final double SCALE_UP = 0x1.0p+600;
+
+        /** {@inheritDoc} */
+        @Override
+        public double applyAsDouble(final double[] v) {
+            double s1 = 0;
+            double s2 = 0;
+            double s3 = 0;
+            double c1 = 0;
+            double c2 = 0;
+            double c3 = 0;
+            for (int i = 0; i < v.length; ++i) {
+                final double x = Math.abs(v[i]);
+                if (Double.isNaN(x)) {
+                    // found an NaN; no use in continuing
+                    return x;
+                } else if (x > LARGE_THRESH) {
+                    // scale down
+                    final double sx = x * SCALE_DOWN;
+
+                    // compute the product and product correction
+                    final double p = sx * sx;
+                    final double cp = productLowUnscaled(sx, p);
+
+                    // compute the running sum and sum correction
+                    final double s = s1 + p;
+                    final double cs = DoublePrecision.twoSumLow(s1, p, s);
+
+                    // update running totals
+                    c1 += cp + cs;
+                    s1 = s;
+                } else if (x < SMALL_THRESH) {
+                    // scale up
+                    final double sx = x * SCALE_UP;
+
+                    // compute the product and product correction
+                    final double p = sx * sx;
+                    final double cp = productLowUnscaled(sx, p);
+
+                    // compute the running sum and sum correction
+                    final double s = s3 + p;
+                    final double cs = DoublePrecision.twoSumLow(s3, p, s);
+
+                    // update running totals
+                    c3 += cp + cs;
+                    s3 = s;
+                } else {
+                    // no scaling
+                    // compute the product and product correction
+                    final double p = x * x;
+                    final double cp = productLowUnscaled(x, p);
+
+                    // compute the running sum and sum correction
+                    final double s = s2 + p;
+                    final double cs = DoublePrecision.twoSumLow(s2, p, s);
+
+                    // update running totals
+                    c2 += cp + cs;
+                    s2 = s;
+                }
+            }
+
+            if (s1 != 0) {
+                // add s1, s2, c1, c2
+                s2 = s2 * SCALE_DOWN * SCALE_DOWN;
+                c2 = c2 * SCALE_DOWN * SCALE_DOWN;
+                final double sum = s1 + s2;
+                c1 += DoublePrecision.twoSumLow(s1, s2, sum) + c2;
+                return Math.sqrt(sum + c1) * SCALE_UP;
+            } else if (s2 != 0) {
+                // add s2, s3, c2, c3
+                s3 = s3 * SCALE_DOWN * SCALE_DOWN;
+                c3 = c3 * SCALE_DOWN * SCALE_DOWN;
+                final double sum = s2 + s3;
+                c2 += DoublePrecision.twoSumLow(s2, s3, sum) + c3;
+                return Math.sqrt(sum + c2);
+            }
+            // add s3, c3
+            return Math.sqrt(s3 + c3) * SCALE_DOWN;
         }
 
         /**
