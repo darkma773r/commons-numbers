@@ -594,4 +594,156 @@ public final class EuclideanNormAlgorithms {
            return DoublePrecision.productLow(hx, lx, hx, lx, xx);
        }
     }
+
+    /** Modification of {@link ExtendedPrecisionLinearCombination} that only uses a single pass through
+     * the input array as well as an extended precision sqrt computation.
+     */
+    static final class ExtendedPrecisionLinearCombinationSqrt2 implements ToDoubleFunction<double[]> {
+
+        /** Threshold for scaling small numbers. */
+        private static final double SMALL_THRESH = 0x1.0p-500;
+
+        /** Threshold for scaling large numbers. */
+        private static final double LARGE_THRESH = 0x1.0p+500;
+
+        /** Value used to scale down large numbers. */
+        private static final double SCALE_DOWN = 0x1.0p-600;
+
+        /** Value used to scale up small numbers. */
+        private static final double SCALE_UP = 0x1.0p+600;
+
+        /** {@inheritDoc} */
+        @Override
+        public double applyAsDouble(final double[] v) {
+            double s1 = 0;
+            double s2 = 0;
+            double s3 = 0;
+            double c1 = 0;
+            double c2 = 0;
+            double c3 = 0;
+            for (int i = 0; i < v.length; ++i) {
+                final double x = Math.abs(v[i]);
+                if (Double.isNaN(x)) {
+                    // found an NaN; no use in continuing
+                    return x;
+                } else if (x > LARGE_THRESH) {
+                    // scale down
+                    final double sx = x * SCALE_DOWN;
+
+                    // compute the product and product correction
+                    final double p = sx * sx;
+                    final double cp = productLowUnscaled(sx, p);
+
+                    // compute the running sum and sum correction
+                    final double s = s1 + p;
+                    final double cs = DoublePrecision.twoSumLow(s1, p, s);
+
+                    // update running totals
+                    c1 += cp + cs;
+                    s1 = s;
+                } else if (x < SMALL_THRESH) {
+                    // scale up
+                    final double sx = x * SCALE_UP;
+
+                    // compute the product and product correction
+                    final double p = sx * sx;
+                    final double cp = productLowUnscaled(sx, p);
+
+                    // compute the running sum and sum correction
+                    final double s = s3 + p;
+                    final double cs = DoublePrecision.twoSumLow(s3, p, s);
+
+                    // update running totals
+                    c3 += cp + cs;
+                    s3 = s;
+                } else {
+                    // no scaling
+                    // compute the product and product correction
+                    final double p = x * x;
+                    final double cp = productLowUnscaled(x, p);
+
+                    // compute the running sum and sum correction
+                    final double s = s2 + p;
+                    final double cs = DoublePrecision.twoSumLow(s2, p, s);
+
+                    // update running totals
+                    c2 += cp + cs;
+                    s2 = s;
+                }
+            }
+
+            if (s1 != 0) {
+                // add s1, s2, c1, c2
+                s2 = s2 * SCALE_DOWN * SCALE_DOWN;
+                c2 = c2 * SCALE_DOWN * SCALE_DOWN;
+                final double sum = s1 + s2;
+                c1 += DoublePrecision.twoSumLow(s1, s2, sum) + c2;
+
+                final double f = sum + c1;
+                final double ff = DoublePrecision.twoSumLow(sum, c1, f);
+                return sqrt2(f, ff) * SCALE_UP;
+            } else if (s2 != 0) {
+                // add s2, s3, c2, c3
+                s3 = s3 * SCALE_DOWN * SCALE_DOWN;
+                c3 = c3 * SCALE_DOWN * SCALE_DOWN;
+                final double sum = s2 + s3;
+                c2 += DoublePrecision.twoSumLow(s2, s3, sum) + c3;
+
+                final double f = sum + c2;
+                final double ff = DoublePrecision.twoSumLow(sum, c2, f);
+                return sqrt2(f, ff);
+            }
+            // add s3, c3
+            final double f = s3 + c3;
+            final double ff = DoublePrecision.twoSumLow(s3, c3, f);
+            return sqrt2(f, ff) * SCALE_DOWN;
+        }
+
+        /**
+         * Compute the low part of the double length number {@code (z,zz)} for the exact
+         * square of {@code x} using Dekker's mult12 algorithm. The standard
+         * precision product {@code x*x} must be provided. The number {@code x}
+         * is split into high and low parts using Dekker's algorithm.
+         *
+         * <p>Warning: This method does not perform scaling in Dekker's split and large
+         * finite numbers can create NaN results.
+         *
+         * @param x The factor.
+         * @param xx Square of the factor (x * x).
+         * @return the low part of the product double length number
+         */
+       private static double productLowUnscaled(double x, double xx) {
+           // Split the numbers using Dekker's algorithm without scaling
+           final double hx = DoublePrecision.highPartUnscaled(x);
+           final double lx = x - hx;
+
+           return DoublePrecision.productLow(hx, lx, hx, lx, xx);
+       }
+
+       /**
+        * Compute the extended precision square root from the split number
+        *  {@code x, xx}.
+        * This is a modification of Dekker's sqrt2 algorithm to ignore the
+        * roundoff of the square root.
+        *
+        * @param x the high part
+        * @param xx the low part
+        * @return the double
+        */
+       private static double sqrt2(final double x, final double xx) {
+           if (x > 0) {
+               double c = Math.sqrt(x);
+               double u = c * c;
+               //double uu = ExtendedPrecision.productLow(c, c, u);
+               // Here we use the optimised version:
+               double uu = productLowUnscaled(c, u);
+               double cc = (x - u - uu + xx) * 0.5 / c;
+               // Extended precision sqrt (y, yy)
+               // y = c + cc
+               // yy = c - y + cc (ignored)
+               return c + cc;
+           }
+           return x;
+       }
+    }
 }

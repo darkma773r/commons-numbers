@@ -30,20 +30,7 @@ class NormsTest {
 
     private static final int RAND_VECTOR_CNT = 1_000;
 
-    private static final int MAX_ULP_ERR = 2;
-
-    @Test
-    void testManhattan_1d() {
-        // act/assert
-        Assertions.assertEquals(0d, Norms.manhattan(0d));
-        Assertions.assertEquals(0d, Norms.manhattan(-0d));
-        Assertions.assertEquals(1d, Norms.manhattan(1d));
-        Assertions.assertEquals(1d, Norms.manhattan(-1d));
-
-        Assertions.assertEquals(Double.NaN, Norms.manhattan(Double.NaN));
-        Assertions.assertEquals(Double.POSITIVE_INFINITY, Norms.manhattan(Double.POSITIVE_INFINITY));
-        Assertions.assertEquals(Double.POSITIVE_INFINITY, Norms.manhattan(Double.NEGATIVE_INFINITY));
-    }
+    private static final int MAX_ULP_ERR = 1;
 
     @Test
     void testManhattan_2d() {
@@ -78,19 +65,6 @@ class NormsTest {
         Assertions.assertEquals(Double.NaN, Norms.manhattan(new double[] {-2d, Double.NaN, 1d}));
         Assertions.assertEquals(Double.POSITIVE_INFINITY,
                 Norms.manhattan(new double[] {Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY}));
-    }
-
-    @Test
-    void testEuclidean_1d() {
-        // act/assert
-        Assertions.assertEquals(0d, Norms.euclidean(0d));
-        Assertions.assertEquals(0d, Norms.euclidean(-0d));
-        Assertions.assertEquals(1d, Norms.euclidean(1d));
-        Assertions.assertEquals(1d, Norms.euclidean(-1d));
-
-        Assertions.assertEquals(Double.NaN, Norms.euclidean(Double.NaN));
-        Assertions.assertEquals(Double.POSITIVE_INFINITY, Norms.euclidean(Double.POSITIVE_INFINITY));
-        Assertions.assertEquals(Double.POSITIVE_INFINITY, Norms.euclidean(Double.NEGATIVE_INFINITY));
     }
 
     @Test
@@ -240,19 +214,7 @@ class NormsTest {
         checkEuclideanRandom(3, rng, Norms::euclidean);
         checkEuclideanRandom(4, rng, Norms::euclidean);
         checkEuclideanRandom(10, rng, Norms::euclidean);
-    }
-
-    @Test
-    void testMaximum_1d() {
-        // act/assert
-        Assertions.assertEquals(0d, Norms.maximum(0d));
-        Assertions.assertEquals(0d, Norms.maximum(-0d));
-        Assertions.assertEquals(1d, Norms.maximum(1d));
-        Assertions.assertEquals(1d, Norms.maximum(-1d));
-
-        Assertions.assertEquals(Double.NaN, Norms.maximum(Double.NaN));
-        Assertions.assertEquals(Double.POSITIVE_INFINITY, Norms.maximum(Double.POSITIVE_INFINITY));
-        Assertions.assertEquals(Double.POSITIVE_INFINITY, Norms.maximum(Double.NEGATIVE_INFINITY));
+        checkEuclideanRandom(100, rng, Norms::euclidean);
     }
 
     @Test

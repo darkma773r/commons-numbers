@@ -52,7 +52,8 @@ class EuclideanNormAccuracyTest {
             .addMethod("enormModExt", new EuclideanNormAlgorithms.EnormModExt())
             .addMethod("extLinear", new EuclideanNormAlgorithms.ExtendedPrecisionLinearCombination())
             .addMethod("extLinearMod", new EuclideanNormAlgorithms.ExtendedPrecisionLinearCombinationMod())
-            .addMethod("extLinearSinglePass", new EuclideanNormAlgorithms.ExtendedPrecisionLinearCombinationSinglePass());
+            .addMethod("extLinearSinglePass", new EuclideanNormAlgorithms.ExtendedPrecisionLinearCombinationSinglePass())
+            .addMethod("extLinearSqrt2", new EuclideanNormAlgorithms.ExtendedPrecisionLinearCombinationSqrt2());
 
         final int samples = 1000;
         final int[] lengths = {1, 2, 3, 4, 5, 10, 20, 30, 40, 50, 75, 100};
@@ -88,15 +89,16 @@ class EuclideanNormAccuracyTest {
         final UniformRandomProvider rng = RandomSource.create(RandomSource.XO_RO_SHI_RO_1024_PP);
 
         final EuclideanNormEvaluator eval = new EuclideanNormEvaluator();
-        eval.addMethod("exact", new EuclideanNormAlgorithms.Exact())
+        eval//.addMethod("exact", new EuclideanNormAlgorithms.Exact())
             .addMethod("direct", new EuclideanNormAlgorithms.Direct())
-            .addMethod("enorm", new EuclideanNormAlgorithms.Enorm())
-            .addMethod("enormMod", new EuclideanNormAlgorithms.EnormMod())
-            .addMethod("enormModKahan", new EuclideanNormAlgorithms.EnormModKahan())
+//            .addMethod("enorm", new EuclideanNormAlgorithms.Enorm())
+//            .addMethod("enormMod", new EuclideanNormAlgorithms.EnormMod())
+//            .addMethod("enormModKahan", new EuclideanNormAlgorithms.EnormModKahan())
             .addMethod("enormModExt", new EuclideanNormAlgorithms.EnormModExt())
             .addMethod("extLinear", new EuclideanNormAlgorithms.ExtendedPrecisionLinearCombination())
             .addMethod("extLinearMod", new EuclideanNormAlgorithms.ExtendedPrecisionLinearCombinationMod())
-            .addMethod("extLinearSinglePass", new EuclideanNormAlgorithms.ExtendedPrecisionLinearCombinationSinglePass());
+            .addMethod("extLinearSinglePass", new EuclideanNormAlgorithms.ExtendedPrecisionLinearCombinationSinglePass())
+            .addMethod("extLinearSqrt2", new EuclideanNormAlgorithms.ExtendedPrecisionLinearCombinationSqrt2());
 
         try (BufferedWriter writer = Files.newBufferedWriter(Paths.get("target/norms.csv"))) {
             writer.write("name, input type, error mean, error std dev, error min, error max, failed");

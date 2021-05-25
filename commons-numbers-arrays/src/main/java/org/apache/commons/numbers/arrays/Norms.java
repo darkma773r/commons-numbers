@@ -36,16 +36,6 @@ public final class Norms {
     /** Utility class; no instantiation. */
     private Norms() {}
 
-    /** Compute the Manhattan norm (also known as the Taxicab norm or L1 norm) of the argument.
-     * The result is equal to \(|x|\), i.e., the absolute value of the argument.
-     * @param x input value
-     * @return Manhattan norm of {@code x} or NaN if {@code x} is NaN
-     * @see <a href="https://en.wikipedia.org/wiki/Norm_(mathematics)#Taxicab_norm_or_Manhattan_norm">Manhattan norm</a>
-     */
-    public static double manhattan(final double x) {
-        return Math.abs(x);
-    }
-
     /** Compute the Manhattan norm (also known as the Taxicab norm or L1 norm) of the arguments.
      * The result is equal to \(|x| + |y|\), i.e., the sum of the absolute values of the arguments.
      * @param x first input value
@@ -81,16 +71,6 @@ public final class Norms {
             s += Math.abs(v[i]);
         }
         return s;
-    }
-
-    /** Compute the Euclidean norm (also known as the L2 norm) of the argument. In the case of a single argument,
-     * the result is simply the absolute value of the input.
-     * @param x input value
-     * @return Euclidean norm of {@code x} or NaN if {@code x} is NaN
-     * @see <a href="https://en.wikipedia.org/wiki/Norm_(mathematics)#Euclidean_norm">Euclidean norm</a>
-     */
-    public static double euclidean(final double x) {
-        return Math.abs(x);
     }
 
     /** Compute the Euclidean norm (also known as the L2 norm) of the arguments. The result is equal to
@@ -177,21 +157,39 @@ public final class Norms {
      * @see <a href="https://en.wikipedia.org/wiki/Norm_(mathematics)#Euclidean_norm">Euclidean norm</a>
      */
     public static double euclidean(final double[] v) {
-        // Sum of big, normal and small numbers
+        // sum of big, normal and small numbers
         double s1 = 0;
         double s2 = 0;
         double s3 = 0;
 
+        // sum correction values
+        double c1 = 0;
+        double c2 = 0;
+        double c3 = 0;
+
         for (int i = 0; i < v.length; ++i) {
             final double x = Math.abs(v[i]);
             if (x > LARGE_THRESH) {
-                // Scale down big numbers
-                s1 += square(x * SCALE_DOWN);
+                // scale down big numbers
+             // scale down
+                final double sx = x * SCALE_DOWN;
+
+                // compute the product and product correction
+                final double p = sx * sx;
+                final double cp = productLowUnscaled(sx, p);
+
+                // compute the running sum and sum correction
+                final double s = s1 + p;
+                final double cs = DoublePrecision.twoSumLow(s1, p, s);
+
+                // update running totals
+                c1 += cp + cs;
+                s1 = s;
             } else if (x < SMALL_THRESH) {
-                // Scale up small numbers
+                // scale up small numbers
                 s3 += square(x * SCALE_UP);
             } else {
-                // Unscaled
+                // unscaled
                 s2 += square(x);
             }
         }
@@ -218,15 +216,26 @@ public final class Norms {
         return Math.sqrt(s3) * SCALE_DOWN;
     }
 
-    /** Compute the maximum norm (also known as the infinity norm or L<sub>inf</sub> norm) of the argument.
-     * The result is equal to \(|x|\), (i.e. the absolute value of the argument).
-     * @param x input value
-     * @return the maximum norm of {@code x} or NaN if {@code x} is NaN
-     * @see <a href="https://en.wikipedia.org/wiki/Norm_(mathematics)#Maximum_norm_(special_case_of:_infinity_norm,_uniform_norm,_or_supremum_norm)">Maximum norm</a>
+    /**
+     * Compute the low part of the double length number {@code (z,zz)} for the exact
+     * square of {@code x} using Dekker's mult12 algorithm. The standard
+     * precision product {@code x*x} must be provided. The number {@code x}
+     * is split into high and low parts using Dekker's algorithm.
+     *
+     * <p>Warning: This method does not perform scaling in Dekker's split and large
+     * finite numbers can create NaN results.
+     *
+     * @param x The factor.
+     * @param xx Square of the factor (x * x).
+     * @return the low part of the product double length number
      */
-    public static double maximum(final double x) {
-        return Math.abs(x);
-    }
+   private static double productLowUnscaled(double x, double xx) {
+       // Split the numbers using Dekker's algorithm without scaling
+       final double hx = DoublePrecision.highPartUnscaled(x);
+       final double lx = x - hx;
+
+       return DoublePrecision.productLow(hx, lx, hx, lx, xx);
+   }
 
     /** Compute the maximum norm (also known as the infinity norm or L<sub>inf</sub> norm) of the arguments.
      * The result is equal to \(\max{(|x|, |y|)}\), i.e., the maximum of the absolute values of the arguments.
