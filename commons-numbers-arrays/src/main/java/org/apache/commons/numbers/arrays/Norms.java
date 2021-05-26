@@ -75,6 +75,13 @@ public final class Norms {
 
     /** Compute the Euclidean norm (also known as the L2 norm) of the arguments. The result is equal to
      * \(\sqrt{x^2 + y^2}\).
+     *
+     * <p>Special cases:
+     * <ul>
+     *  <li>If any value is NaN, then the result is NaN.</li>
+     *  <li>If any value is infinite but no value is NaN, then the result is positive infinity.</li>
+     *  <li>If the array is empty, then the result is 0.</li>
+     * </ul>
      * @param x first input
      * @param y second input
      * @return Euclidean norm of the arguments or NaN if any value is NaN
@@ -108,6 +115,13 @@ public final class Norms {
 
     /** Compute the Euclidean norm (also known as the L2 norm) of the arguments. The result is equal to
      * \(\sqrt{x^2 + y^2 + z^2}\).
+     *
+     * <p>Special cases:
+     * <ul>
+     *  <li>If any value is NaN, then the result is NaN.</li>
+     *  <li>If any value is infinite but no value is NaN, then the result is positive infinity.</li>
+     *  <li>If the array is empty, then the result is 0.</li>
+     * </ul>
      * @param x first input
      * @param y second input
      * @param z third input
@@ -151,6 +165,13 @@ public final class Norms {
 
     /** Compute the Euclidean norm (also known as the L2 norm) of the given values. The result is equal to
      * \(\sqrt{v_0^2 + ... + v_i^2}\).
+     *
+     * <p>Special cases:
+     * <ul>
+     *  <li>If any value is NaN, then the result is NaN.</li>
+     *  <li>If any value is infinite but no value is NaN, then the result is positive infinity.</li>
+     *  <li>If the array is empty, then the result is 0.</li>
+     * </ul>
      * @param v input values
      * @return Euclidean norm of the input values, NaN if any element is NaN, or 0 if the input array
      *      is empty
@@ -169,32 +190,88 @@ public final class Norms {
 
         for (int i = 0; i < v.length; ++i) {
             final double x = Math.abs(v[i]);
-            if (x > LARGE_THRESH) {
-                // scale down big numbers
-             // scale down
+            if (!Double.isFinite(x)) {
+                return euclideanNormSpecial(v, i);
+            } else if (x > LARGE_THRESH) {
+                // scale down
                 final double sx = x * SCALE_DOWN;
 
                 // compute the product and product correction
                 final double p = sx * sx;
-                final double cp = productLowUnscaled(sx, p);
+                final double cp = ExtendedPrecision.squareLowUnscaled(sx, p);
 
                 // compute the running sum and sum correction
                 final double s = s1 + p;
-                final double cs = DoublePrecision.twoSumLow(s1, p, s);
+                final double cs = ExtendedPrecision.twoSumLow(s1, p, s);
 
                 // update running totals
                 c1 += cp + cs;
                 s1 = s;
             } else if (x < SMALL_THRESH) {
-                // scale up small numbers
-                s3 += square(x * SCALE_UP);
+                // scale up
+                final double sx = x * SCALE_UP;
+
+                // compute the product and product correction
+                final double p = sx * sx;
+                final double cp = ExtendedPrecision.squareLowUnscaled(sx, p);
+
+                // compute the running sum and sum correction
+                final double s = s3 + p;
+                final double cs = ExtendedPrecision.twoSumLow(s3, p, s);
+
+                // update running totals
+                c3 += cp + cs;
+                s3 = s;
             } else {
-                // unscaled
-                s2 += square(x);
+                // no scaling
+                // compute the product and product correction
+                final double p = x * x;
+                final double cp = ExtendedPrecision.squareLowUnscaled(x, p);
+
+                // compute the running sum and sum correction
+                final double s = s2 + p;
+                final double cs = ExtendedPrecision.twoSumLow(s2, p, s);
+
+                // update running totals
+                c2 += cp + cs;
+                s2 = s;
             }
         }
 
-        return euclideanNormFromScaled(s1, s2, s3);
+        return euclideanNormFromScaled(s1, s2, s3, c1, c2, c3);
+    }
+
+    private static double euclideanNormFromScaled(
+            final double s1, final double s2, final double s3,
+            final double c1, final double c2, final double c3) {
+        // The highest sum is the significant component. Add the next significant.
+        // Note that the "x * SCALE_DOWN * SCALE_DOWN" expressions must be executed
+        // in the order given. If the two scale factors are multiplied together first,
+        // they will underflow to zero.
+        if (s1 != 0) {
+            // add s1, s2, c1, c2
+            final double s2Adj = s2 * SCALE_DOWN * SCALE_DOWN;
+            final double sum = s1 + s2Adj;
+            final double corr = ExtendedPrecision.twoSumLow(s1, s2Adj, sum) + c1 + (c2 * SCALE_DOWN * SCALE_DOWN);
+            return Math.sqrt(sum + corr) * SCALE_UP;
+        } else if (s2 != 0) {
+            // add s2, s3, c2, c3
+            final double s3Adj = s3 * SCALE_DOWN * SCALE_DOWN;
+            final double sum = s2 + s3Adj;
+            final double corr = ExtendedPrecision.twoSumLow(s2, s3Adj, sum) + c2 + (c3 * SCALE_DOWN * SCALE_DOWN);
+            return Math.sqrt(sum + corr);
+        }
+        // add s3, c3
+        return Math.sqrt(s3 + c3) * SCALE_DOWN;
+    }
+
+    private static double euclideanNormSpecial(final double[] v, final int start) {
+        for (int i = start; i < v.length; ++i) {
+            if (Double.isNaN(v[i])) {
+                return Double.NaN;
+            }
+        }
+        return Double.POSITIVE_INFINITY;
     }
 
     /** Compute the Euclidean norm from high, mid, and low scaled sums.
@@ -215,27 +292,6 @@ public final class Norms {
         }
         return Math.sqrt(s3) * SCALE_DOWN;
     }
-
-    /**
-     * Compute the low part of the double length number {@code (z,zz)} for the exact
-     * square of {@code x} using Dekker's mult12 algorithm. The standard
-     * precision product {@code x*x} must be provided. The number {@code x}
-     * is split into high and low parts using Dekker's algorithm.
-     *
-     * <p>Warning: This method does not perform scaling in Dekker's split and large
-     * finite numbers can create NaN results.
-     *
-     * @param x The factor.
-     * @param xx Square of the factor (x * x).
-     * @return the low part of the product double length number
-     */
-   private static double productLowUnscaled(double x, double xx) {
-       // Split the numbers using Dekker's algorithm without scaling
-       final double hx = DoublePrecision.highPartUnscaled(x);
-       final double lx = x - hx;
-
-       return DoublePrecision.productLow(hx, lx, hx, lx, xx);
-   }
 
     /** Compute the maximum norm (also known as the infinity norm or L<sub>inf</sub> norm) of the arguments.
      * The result is equal to \(\max{(|x|, |y|)}\), i.e., the maximum of the absolute values of the arguments.

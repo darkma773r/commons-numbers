@@ -181,6 +181,8 @@ class NormsTest {
         Assertions.assertEquals(Double.NaN,
                 Norms.euclidean(new double[] {Double.POSITIVE_INFINITY, Double.NaN}));
         Assertions.assertEquals(Double.POSITIVE_INFINITY,
+                Norms.euclidean(new double[] {Double.POSITIVE_INFINITY, 1, 0}));
+        Assertions.assertEquals(Double.POSITIVE_INFINITY,
                 Norms.euclidean(new double[] {Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY}));
         Assertions.assertEquals(Double.POSITIVE_INFINITY,
                 Norms.euclidean(new double[] {Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY}));
