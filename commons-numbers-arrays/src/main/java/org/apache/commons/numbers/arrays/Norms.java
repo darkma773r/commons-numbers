@@ -27,6 +27,9 @@ public final class Norms {
     /** Threshold for scaling large numbers. */
     private static final double LARGE_THRESH = 0x1.0p+500;
 
+    /** Threshold for scaling up without risking overflow. */
+    private static final double SAFE_SCALE_UP_THRESH = 0x1.0p-200;
+
     /** Value used to scale down large numbers. */
     private static final double SCALE_DOWN = 0x1.0p-600;
 
@@ -38,9 +41,15 @@ public final class Norms {
 
     /** Compute the Manhattan norm (also known as the Taxicab norm or L1 norm) of the arguments.
      * The result is equal to \(|x| + |y|\), i.e., the sum of the absolute values of the arguments.
+     *
+     * <p>Special cases:
+     * <ul>
+     *  <li>If either value is NaN, then the result is NaN.</li>
+     *  <li>If either value is infinite and the other value is not NaN, then the result is positive infinity.</li>
+     * </ul>
      * @param x first input value
      * @param y second input value
-     * @return Manhattan norm or NaN if any input is NaN
+     * @return Manhattan norm
      * @see <a href="https://en.wikipedia.org/wiki/Norm_(mathematics)#Taxicab_norm_or_Manhattan_norm">Manhattan norm</a>
      */
     public static double manhattan(final double x, final double y) {
@@ -49,10 +58,16 @@ public final class Norms {
 
     /** Compute the Manhattan norm (also known as the Taxicab norm or L1 norm) of the arguments.
      * The result is equal to \(|x| + |y| + |z|\), i.e., the sum of the absolute values of the arguments.
+     *
+     * <p>Special cases:
+     * <ul>
+     *  <li>If any value is NaN, then the result is NaN.</li>
+     *  <li>If any value is infinite and no value is NaN, then the result is positive infinity.</li>
+     * </ul>
      * @param x first input value
      * @param y second input value
      * @param z third input value
-     * @return Manhattan norm or NaN if any input is NaN
+     * @return Manhattan norm
      * @see <a href="https://en.wikipedia.org/wiki/Norm_(mathematics)#Taxicab_norm_or_Manhattan_norm">Manhattan norm</a>
      */
     public static double manhattan(final double x, final double y, final double z) {
@@ -61,8 +76,15 @@ public final class Norms {
 
     /** Compute the Manhattan norm (also known as the Taxicab norm or L1 norm) of the given values.
      * The result is equal to \(|v_0| + ... + |v_i|\), i.e., the sum of the absolute values of the input elements.
+     *
+     * <p>Special cases:
+     * <ul>
+     *  <li>If any value is NaN, then the result is NaN.</li>
+     *  <li>If any value is infinite and no value is NaN, then the result is positive infinity.</li>
+     *  <li>If the array is empty, then the result is 0.</li>
+     * </ul>
      * @param v input values
-     * @return Manhattan norm, NaN if any element is NaN, or 0 if the input array is empty
+     * @return Manhattan norm
      * @see <a href="https://en.wikipedia.org/wiki/Norm_(mathematics)#Taxicab_norm_or_Manhattan_norm">Manhattan norm</a>
      */
     public static double manhattan(final double[] v) {
@@ -78,39 +100,63 @@ public final class Norms {
      *
      * <p>Special cases:
      * <ul>
-     *  <li>If any value is NaN, then the result is NaN.</li>
-     *  <li>If any value is infinite but no value is NaN, then the result is positive infinity.</li>
-     *  <li>If the array is empty, then the result is 0.</li>
+     *  <li>If either value is NaN, then the result is NaN.</li>
+     *  <li>If either value is infinite and the other value is not NaN, then the result is positive infinity.</li>
      * </ul>
      * @param x first input
      * @param y second input
-     * @return Euclidean norm of the arguments or NaN if any value is NaN
+     * @return Euclidean norm
      * @see <a href="https://en.wikipedia.org/wiki/Norm_(mathematics)#Euclidean_norm">Euclidean norm</a>
      */
     public static double euclidean(final double x, final double y) {
-        double s1 = 0;
-        double s2 = 0;
-        double s3 = 0;
+        final double xabs = Math.abs(x);
+        final double yabs = Math.abs(y);
 
-        final double xAbs = Math.abs(x);
-        if (xAbs > LARGE_THRESH) {
-            s1 += square(xAbs * SCALE_DOWN);
-        } else if (xAbs < SMALL_THRESH) {
-            s3 += square(xAbs * SCALE_UP);
-        } else {
-            s2 += square(xAbs);
+        final double max = Math.max(xabs, yabs);
+
+        // if the max is not finite, then one of the inputs must not have
+        // been finite
+        if (!Double.isFinite(max)) {
+            if (Double.isNaN(x) || Double.isNaN(y)) {
+                return Double.NaN;
+            }
+            return Double.POSITIVE_INFINITY;
         }
 
-        final double yAbs = Math.abs(y);
-        if (yAbs > LARGE_THRESH) {
-            s1 += square(yAbs * SCALE_DOWN);
-        } else if (yAbs < SMALL_THRESH) {
-            s3 += square(yAbs * SCALE_UP);
+        // compute the scale and rescale values
+        final double scale;
+        final double rescale;
+        if (max > LARGE_THRESH) {
+            scale = SCALE_DOWN;
+            rescale = SCALE_UP;
+        } else if (max < SAFE_SCALE_UP_THRESH) {
+            scale = SCALE_UP;
+            rescale = SCALE_DOWN;
         } else {
-            s2 += square(yAbs);
+            scale = 1d;
+            rescale = 1d;
         }
 
-        return euclideanNormFromScaled(s1, s2, s3);
+        double sum = 0d;
+        double corr = 0d;
+
+        // add scaled x
+        double sx = xabs * scale;
+        final double px = sx * sx;
+        corr += ExtendedPrecision.squareLowUnscaled(sx, px);
+        final double sumPx = sum + px;
+        corr += ExtendedPrecision.twoSumLow(sum, px, sumPx);
+        sum = sumPx;
+
+        // add scaled y
+        double sy = yabs * scale;
+        final double py = sy * sy;
+        corr += ExtendedPrecision.squareLowUnscaled(sy, py);
+        final double sumPy = sum + py;
+        corr += ExtendedPrecision.twoSumLow(sum, py, sumPy);
+        sum = sumPy;
+
+        return Math.sqrt(sum + corr) * rescale;
     }
 
     /** Compute the Euclidean norm (also known as the L2 norm) of the arguments. The result is equal to
@@ -119,48 +165,72 @@ public final class Norms {
      * <p>Special cases:
      * <ul>
      *  <li>If any value is NaN, then the result is NaN.</li>
-     *  <li>If any value is infinite but no value is NaN, then the result is positive infinity.</li>
-     *  <li>If the array is empty, then the result is 0.</li>
+     *  <li>If any value is infinite and no value is NaN, then the result is positive infinity.</li>
      * </ul>
      * @param x first input
      * @param y second input
      * @param z third input
-     * @return Euclidean norm of the arguments or NaN if any value is NaN
+     * @return Euclidean norm
      * @see <a href="https://en.wikipedia.org/wiki/Norm_(mathematics)#Euclidean_norm">Euclidean norm</a>
      */
     public static double euclidean(final double x, final double y, final double z) {
-        double s1 = 0;
-        double s2 = 0;
-        double s3 = 0;
+        final double xabs = Math.abs(x);
+        final double yabs = Math.abs(y);
+        final double zabs = Math.abs(z);
 
-        final double xAbs = Math.abs(x);
-        if (xAbs > LARGE_THRESH) {
-            s1 += square(xAbs * SCALE_DOWN);
-        } else if (xAbs < SMALL_THRESH) {
-            s3 += square(xAbs * SCALE_UP);
-        } else {
-            s2 += square(xAbs);
+        final double max = Math.max(Math.max(xabs, yabs), zabs);
+
+        // if the max is not finite, then one of the inputs must not have
+        // been finite
+        if (!Double.isFinite(max)) {
+            if (Double.isNaN(x) || Double.isNaN(y) || Double.isNaN(z)) {
+                return Double.NaN;
+            }
+            return Double.POSITIVE_INFINITY;
         }
 
-        final double yAbs = Math.abs(y);
-        if (yAbs > LARGE_THRESH) {
-            s1 += square(yAbs * SCALE_DOWN);
-        } else if (yAbs < SMALL_THRESH) {
-            s3 += square(yAbs * SCALE_UP);
+        // compute the scale and rescale values
+        final double scale;
+        final double rescale;
+        if (max > LARGE_THRESH) {
+            scale = SCALE_DOWN;
+            rescale = SCALE_UP;
+        } else if (max < SAFE_SCALE_UP_THRESH) {
+            scale = SCALE_UP;
+            rescale = SCALE_DOWN;
         } else {
-            s2 += square(yAbs);
+            scale = 1d;
+            rescale = 1d;
         }
 
-        final double zAbs = Math.abs(z);
-        if (zAbs > LARGE_THRESH) {
-            s1 += square(zAbs * SCALE_DOWN);
-        } else if (zAbs < SMALL_THRESH) {
-            s3 += square(zAbs * SCALE_UP);
-        } else {
-            s2 += square(zAbs);
-        }
+        double sum = 0d;
+        double corr = 0d;
 
-        return euclideanNormFromScaled(s1, s2, s3);
+        // add scaled x
+        double sx = xabs * scale;
+        final double px = sx * sx;
+        corr += ExtendedPrecision.squareLowUnscaled(sx, px);
+        final double sumPx = sum + px;
+        corr += ExtendedPrecision.twoSumLow(sum, px, sumPx);
+        sum = sumPx;
+
+        // add scaled y
+        double sy = yabs * scale;
+        final double py = sy * sy;
+        corr += ExtendedPrecision.squareLowUnscaled(sy, py);
+        final double sumPy = sum + py;
+        corr += ExtendedPrecision.twoSumLow(sum, py, sumPy);
+        sum = sumPy;
+
+        // add scaled z
+        final double sz = zabs * scale;
+        final double pz = sz * sz;
+        corr += ExtendedPrecision.squareLowUnscaled(sz, pz);
+        final double sumPz = sum + pz;
+        corr += ExtendedPrecision.twoSumLow(sum, pz, sumPz);
+        sum = sumPz;
+
+        return Math.sqrt(sum + corr) * rescale;
     }
 
     /** Compute the Euclidean norm (also known as the L2 norm) of the given values. The result is equal to
@@ -169,12 +239,11 @@ public final class Norms {
      * <p>Special cases:
      * <ul>
      *  <li>If any value is NaN, then the result is NaN.</li>
-     *  <li>If any value is infinite but no value is NaN, then the result is positive infinity.</li>
+     *  <li>If any value is infinite and no value is NaN, then the result is positive infinity.</li>
      *  <li>If the array is empty, then the result is 0.</li>
      * </ul>
      * @param v input values
-     * @return Euclidean norm of the input values, NaN if any element is NaN, or 0 if the input array
-     *      is empty
+     * @return Euclidean norm
      * @see <a href="https://en.wikipedia.org/wiki/Norm_(mathematics)#Euclidean_norm">Euclidean norm</a>
      */
     public static double euclidean(final double[] v) {
@@ -238,12 +307,6 @@ public final class Norms {
             }
         }
 
-        return euclideanNormFromScaled(s1, s2, s3, c1, c2, c3);
-    }
-
-    private static double euclideanNormFromScaled(
-            final double s1, final double s2, final double s3,
-            final double c1, final double c2, final double c3) {
         // The highest sum is the significant component. Add the next significant.
         // Note that the "x * SCALE_DOWN * SCALE_DOWN" expressions must be executed
         // in the order given. If the two scale factors are multiplied together first,
@@ -265,6 +328,11 @@ public final class Norms {
         return Math.sqrt(s3 + c3) * SCALE_DOWN;
     }
 
+    /** Return a Euclidean norm value for special cases of non-finite input.
+     * @param v input vector
+     * @param start index to start examining the input vector from
+     * @return Euclidean norm special value
+     */
     private static double euclideanNormSpecial(final double[] v, final int start) {
         for (int i = start; i < v.length; ++i) {
             if (Double.isNaN(v[i])) {
@@ -274,30 +342,17 @@ public final class Norms {
         return Double.POSITIVE_INFINITY;
     }
 
-    /** Compute the Euclidean norm from high, mid, and low scaled sums.
-     * @param s1 high scaled sum
-     * @param s2 mid sum
-     * @param s3 low scaled sum
-     * @return Euclidean norm
-     */
-    private static double euclideanNormFromScaled(final double s1, final double s2, final double s3) {
-        // The highest sum is the significant component. Add the next significant.
-        // Note that the "x * SCALE_DOWN * SCALE_DOWN" expressions must be executed
-        // in the order given. If the two scale factors are multiplied together first,
-        // they will underflow to zero.
-        if (s1 != 0) {
-            return Math.sqrt(s1 + (s2 * SCALE_DOWN * SCALE_DOWN)) * SCALE_UP;
-        } else if (s2 != 0) {
-            return Math.sqrt(s2 + (s3 * SCALE_DOWN * SCALE_DOWN));
-        }
-        return Math.sqrt(s3) * SCALE_DOWN;
-    }
-
     /** Compute the maximum norm (also known as the infinity norm or L<sub>inf</sub> norm) of the arguments.
      * The result is equal to \(\max{(|x|, |y|)}\), i.e., the maximum of the absolute values of the arguments.
+     *
+     * <p>Special cases:
+     * <ul>
+     *  <li>If either value is NaN, then the result is NaN.</li>
+     *  <li>If either value is infinite and the other value is not NaN, then the result is positive infinity.</li>
+     * </ul>
      * @param x first input
      * @param y second input
-     * @return the maximum norm of the arguments or NaN if any value is NaN
+     * @return maximum norm
      * @see <a href="https://en.wikipedia.org/wiki/Norm_(mathematics)#Maximum_norm_(special_case_of:_infinity_norm,_uniform_norm,_or_supremum_norm)">Maximum norm</a>
      */
     public static double maximum(final double x, final double y) {
@@ -306,10 +361,16 @@ public final class Norms {
 
     /** Compute the maximum norm (also known as the infinity norm or L<sub>inf</sub> norm) of the arguments.
      * The result is equal to \(\max{(|x|, |y|, |z|)}\), i.e., the maximum of the absolute values of the arguments.
+     *
+     * <p>Special cases:
+     * <ul>
+     *  <li>If any value is NaN, then the result is NaN.</li>
+     *  <li>If any value is infinite and no value is NaN, then the result is positive infinity.</li>
+     * </ul>
      * @param x first input
      * @param y second input
      * @param z third input
-     * @return the maximum norm of the arguments or NaN if any value is NaN
+     * @return maximum norm
      * @see <a href="https://en.wikipedia.org/wiki/Norm_(mathematics)#Maximum_norm_(special_case_of:_infinity_norm,_uniform_norm,_or_supremum_norm)">Maximum norm</a>
      */
     public static double maximum(final double x, final double y, final double z) {
@@ -321,8 +382,15 @@ public final class Norms {
     /** Compute the maximum norm (also known as the infinity norm or L<sub>inf</sub> norm) of the given values.
      * The result is equal to \(\max{(|v_0|, ... |v_i|)}\), i.e., the maximum of the absolute values of the
      * input elements.
+     *
+     * <p>Special cases:
+     * <ul>
+     *  <li>If any value is NaN, then the result is NaN.</li>
+     *  <li>If any value is infinite and no value is NaN, then the result is positive infinity.</li>
+     *  <li>If the array is empty, then the result is 0.</li>
+     * </ul>
      * @param v input values
-     * @return the maximum norm of the inputs, NaN if any value is NaN, or 0 if the input array is empty
+     * @return maximum norm
      * @see <a href="https://en.wikipedia.org/wiki/Norm_(mathematics)#Maximum_norm_(special_case_of:_infinity_norm,_uniform_norm,_or_supremum_norm)">Maximum norm</a>
      */
     public static double maximum(final double[] v) {
@@ -331,13 +399,5 @@ public final class Norms {
             max = Math.max(max, Math.abs(v[i]));
         }
         return max;
-    }
-
-    /** Return the square of {@code x}.
-     * @param x number to square
-     * @return x * x
-     */
-    private static double square(final double x) {
-        return x * x;
     }
 }

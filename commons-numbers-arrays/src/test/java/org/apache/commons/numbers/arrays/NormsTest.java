@@ -37,10 +37,18 @@ class NormsTest {
         // act/assert
         Assertions.assertEquals(0d, Norms.manhattan(0d, -0d));
         Assertions.assertEquals(3d, Norms.manhattan(-1d, 2d));
+        Assertions.assertEquals(Double.POSITIVE_INFINITY, Norms.manhattan(Double.MAX_VALUE, Double.MAX_VALUE));
 
         Assertions.assertEquals(Double.NaN, Norms.manhattan(Double.NaN, 1d));
+        Assertions.assertEquals(Double.NaN, Norms.manhattan(1d, Double.NaN));
+        Assertions.assertEquals(Double.NaN, Norms.manhattan(Double.POSITIVE_INFINITY, Double.NaN));
+
         Assertions.assertEquals(Double.POSITIVE_INFINITY,
-                Norms.manhattan(Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY));
+                Norms.manhattan(Double.POSITIVE_INFINITY, 0d));
+        Assertions.assertEquals(Double.POSITIVE_INFINITY,
+                Norms.manhattan(0d, Double.POSITIVE_INFINITY));
+        Assertions.assertEquals(Double.POSITIVE_INFINITY,
+                Norms.manhattan(Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY));
     }
 
     @Test
@@ -48,10 +56,19 @@ class NormsTest {
         // act/assert
         Assertions.assertEquals(0d, Norms.manhattan(0d, -0d, 0d));
         Assertions.assertEquals(6d, Norms.manhattan(-1d, 2d, -3d));
+        Assertions.assertEquals(Double.POSITIVE_INFINITY, Norms.manhattan(Double.MAX_VALUE, Double.MAX_VALUE, 0d));
 
+        Assertions.assertEquals(Double.NaN, Norms.manhattan(Double.NaN, -2d, 1d));
         Assertions.assertEquals(Double.NaN, Norms.manhattan(-2d, Double.NaN, 1d));
+        Assertions.assertEquals(Double.NaN, Norms.manhattan(-2d, 1d, Double.NaN));
+        Assertions.assertEquals(Double.NaN, Norms.manhattan(-2d, Double.POSITIVE_INFINITY, Double.NaN));
+
+        Assertions.assertEquals(Double.POSITIVE_INFINITY,
+                Norms.manhattan(Double.POSITIVE_INFINITY, 2d, -4d));
         Assertions.assertEquals(Double.POSITIVE_INFINITY,
                 Norms.manhattan(Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, -4d));
+        Assertions.assertEquals(Double.POSITIVE_INFINITY,
+                Norms.manhattan(Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY));
     }
 
     @Test
@@ -61,10 +78,16 @@ class NormsTest {
         Assertions.assertEquals(0d, Norms.manhattan(new double[] {0d, -0d}));
         Assertions.assertEquals(6d, Norms.manhattan(new double[] {-1d, 2d, -3d}));
         Assertions.assertEquals(10d, Norms.manhattan(new double[] {-1d, 2d, -3d, 4d}));
+        Assertions.assertEquals(Double.POSITIVE_INFINITY,
+                Norms.manhattan(new double[] {Double.MAX_VALUE, Double.MAX_VALUE}));
 
         Assertions.assertEquals(Double.NaN, Norms.manhattan(new double[] {-2d, Double.NaN, 1d}));
+        Assertions.assertEquals(Double.NaN, Norms.manhattan(new double[] {Double.POSITIVE_INFINITY, Double.NaN, 1d}));
+
         Assertions.assertEquals(Double.POSITIVE_INFINITY,
-                Norms.manhattan(new double[] {Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY}));
+                Norms.manhattan(new double[] {Double.POSITIVE_INFINITY, 0d}));
+        Assertions.assertEquals(Double.POSITIVE_INFINITY,
+                Norms.manhattan(new double[] {Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY}));
     }
 
     @Test
@@ -74,16 +97,19 @@ class NormsTest {
         Assertions.assertEquals(1d, Norms.euclidean(1d, 0d));
         Assertions.assertEquals(1d, Norms.euclidean(0d, 1d));
         Assertions.assertEquals(5d, Norms.euclidean(-3d, 4d));
+        Assertions.assertEquals(Double.POSITIVE_INFINITY, Norms.euclidean(Double.MAX_VALUE, Double.MAX_VALUE));
 
         Assertions.assertEquals(Math.sqrt(2), Norms.euclidean(1d, -1d));
 
+        Assertions.assertEquals(Double.NaN, Norms.euclidean(Double.NaN, -2d));
         Assertions.assertEquals(Double.NaN, Norms.euclidean(-2d, Double.NaN));
         Assertions.assertEquals(Double.NaN,
                 Norms.euclidean(Double.NaN, Double.NEGATIVE_INFINITY));
+
         Assertions.assertEquals(Double.POSITIVE_INFINITY,
                 Norms.euclidean(1d, Double.NEGATIVE_INFINITY));
         Assertions.assertEquals(Double.POSITIVE_INFINITY,
-                Norms.euclidean(Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY));
+                Norms.euclidean(Double.POSITIVE_INFINITY, -1d));
         Assertions.assertEquals(Double.POSITIVE_INFINITY,
                 Norms.euclidean(Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY));
     }
@@ -124,12 +150,16 @@ class NormsTest {
         Assertions.assertEquals(1d, Norms.euclidean(0d, 1d, 0d));
         Assertions.assertEquals(1d, Norms.euclidean(0d, 0d, 1d));
         Assertions.assertEquals(5 * Math.sqrt(2), Norms.euclidean(-3d, -4d, 5d));
+        Assertions.assertEquals(Double.POSITIVE_INFINITY, Norms.euclidean(0d, Double.MAX_VALUE, Double.MAX_VALUE));
 
         Assertions.assertEquals(Math.sqrt(3), Norms.euclidean(1d, -1d, 1d));
 
+        Assertions.assertEquals(Double.NaN, Norms.euclidean(Double.NaN, -2d, 0d));
+        Assertions.assertEquals(Double.NaN, Norms.euclidean(-2d, Double.NaN, 0d));
         Assertions.assertEquals(Double.NaN, Norms.euclidean(-2d, 0d, Double.NaN));
         Assertions.assertEquals(Double.NaN,
                 Norms.euclidean(Double.POSITIVE_INFINITY, Double.NaN, 1d));
+
         Assertions.assertEquals(Double.POSITIVE_INFINITY,
                 Norms.euclidean(Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, 1d));
         Assertions.assertEquals(Double.POSITIVE_INFINITY,
@@ -176,6 +206,9 @@ class NormsTest {
 
         final double[] longVec = new double[] {-0.9, 8.7, -6.5, -4.3, -2.1, 0, 1.2, 3.4, -5.6, 7.8, 9.0};
         Assertions.assertEquals(directEuclideanNorm(longVec), Norms.euclidean(longVec));
+
+        Assertions.assertEquals(Double.POSITIVE_INFINITY,
+                Norms.euclidean(new double[] {Double.MAX_VALUE, Double.MAX_VALUE}));
 
         Assertions.assertEquals(Double.NaN, Norms.euclidean(new double[] {-2d, Double.NaN, 1d}));
         Assertions.assertEquals(Double.NaN,
@@ -225,10 +258,17 @@ class NormsTest {
         Assertions.assertEquals(0d, Norms.maximum(0d, -0d));
         Assertions.assertEquals(2d, Norms.maximum(1d, -2d));
         Assertions.assertEquals(3d, Norms.maximum(3d, 1d));
+        Assertions.assertEquals(Double.MAX_VALUE, Norms.maximum(Double.MAX_VALUE, Double.MAX_VALUE));
 
         Assertions.assertEquals(Double.NaN, Norms.maximum(Double.NaN, 0d));
+        Assertions.assertEquals(Double.NaN, Norms.maximum(0d, Double.NaN));
+        Assertions.assertEquals(Double.NaN, Norms.maximum(Double.POSITIVE_INFINITY, Double.NaN));
+
         Assertions.assertEquals(Double.POSITIVE_INFINITY, Norms.maximum(Double.POSITIVE_INFINITY, 0d));
         Assertions.assertEquals(Double.POSITIVE_INFINITY, Norms.maximum(Double.NEGATIVE_INFINITY, 0d));
+        Assertions.assertEquals(Double.POSITIVE_INFINITY, Norms.maximum(0d, Double.NEGATIVE_INFINITY));
+        Assertions.assertEquals(Double.POSITIVE_INFINITY,
+                Norms.maximum(Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY));
     }
 
     @Test
@@ -237,10 +277,18 @@ class NormsTest {
         Assertions.assertEquals(0d, Norms.maximum(0d, -0d, 0d));
         Assertions.assertEquals(3d, Norms.maximum(1d, -2d, 3d));
         Assertions.assertEquals(4d, Norms.maximum(-4d, -2d, 3d));
+        Assertions.assertEquals(Double.MAX_VALUE, Norms.maximum(Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE));
 
+        Assertions.assertEquals(Double.NaN, Norms.maximum(Double.NaN, 3d, 0d));
         Assertions.assertEquals(Double.NaN, Norms.maximum(3d, Double.NaN, 0d));
+        Assertions.assertEquals(Double.NaN, Norms.maximum(3d, 0d, Double.NaN));
+        Assertions.assertEquals(Double.NaN, Norms.maximum(Double.POSITIVE_INFINITY, 0d, Double.NaN));
+
         Assertions.assertEquals(Double.POSITIVE_INFINITY, Norms.maximum(Double.POSITIVE_INFINITY, 0d, 1d));
-        Assertions.assertEquals(Double.POSITIVE_INFINITY, Norms.maximum(Double.NEGATIVE_INFINITY, 0d, -1d));
+        Assertions.assertEquals(Double.POSITIVE_INFINITY, Norms.maximum(0d, Double.POSITIVE_INFINITY, 1d));
+        Assertions.assertEquals(Double.POSITIVE_INFINITY, Norms.maximum(0d, 1d, Double.NEGATIVE_INFINITY));
+        Assertions.assertEquals(Double.POSITIVE_INFINITY,
+                Norms.maximum(Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY));
     }
 
     @Test
@@ -250,10 +298,15 @@ class NormsTest {
         Assertions.assertEquals(0d, Norms.maximum(new double[] {0d, -0d}));
         Assertions.assertEquals(3d, Norms.maximum(new double[] {-1d, 2d, -3d}));
         Assertions.assertEquals(4d, Norms.maximum(new double[] {-1d, 2d, -3d, 4d}));
+        Assertions.assertEquals(Double.MAX_VALUE, Norms.maximum(new double[] {Double.MAX_VALUE, Double.MAX_VALUE}));
 
         Assertions.assertEquals(Double.NaN, Norms.maximum(new double[] {-2d, Double.NaN, 1d}));
+        Assertions.assertEquals(Double.NaN, Norms.maximum(new double[] {Double.POSITIVE_INFINITY, Double.NaN}));
+
         Assertions.assertEquals(Double.POSITIVE_INFINITY,
-                Norms.maximum(new double[] {Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY}));
+                Norms.maximum(new double[] {0d, Double.POSITIVE_INFINITY}));
+        Assertions.assertEquals(Double.POSITIVE_INFINITY,
+                Norms.maximum(new double[] {Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY}));
     }
 
     /** Check a number of random vectors of length {@code len} with various exponent
@@ -289,7 +342,7 @@ class NormsTest {
             final UniformRandomProvider rng, final ToDoubleFunction<double[]> fn) {
         for (int i = 0; i < RAND_VECTOR_CNT; ++i) {
             // arrange
-            final double[] v = randomVector(len, minExp, maxExp, rng);
+            final double[] v = DoubleTestUtils.randomVector(len, minExp, maxExp, rng);
 
             final double exact = exactEuclideanNorm(v);
             final double direct = directEuclideanNorm(v);
@@ -302,18 +355,11 @@ class NormsTest {
                 "Computed norm was not finite; vector= " + Arrays.toString(v) + ", exact= " + exact +
                 ", direct= " + direct + ", actual= " + actual);
 
-            if (Double.isFinite(direct) && direct != 0d) {
-                final int directUlpError = Math.abs(computeUlpDifference(exact, direct));
-                final int actualUlpError = Math.abs(computeUlpDifference(exact, actual));
+            final int ulpError = Math.abs(DoubleTestUtils.computeUlpDifference(exact, actual));
 
-                // The ulp error should nearly always be less than or equal to the error from
-                // direct computation. In the small number of cases where it is not, assert that the
-                // actual error is less than a threshold.
-                Assertions.assertTrue(actualUlpError <= directUlpError || (actualUlpError <= MAX_ULP_ERR), () ->
-                    "Computed norm error exceeds bounds; vector= " + Arrays.toString(v) +
-                    ", exact= " + exact + ", direct= " + direct + ", directUlpError= " + directUlpError +
-                    ", actual= " + actual + ", actualUlpError= " + actualUlpError);
-            }
+            Assertions.assertTrue(ulpError <= MAX_ULP_ERR, () ->
+                "Computed norm ulp error exceeds bounds; vector= " + Arrays.toString(v) +
+                ", exact= " + exact + ", actual= " + actual + ", ulpError= " + ulpError);
         }
     }
 
@@ -362,47 +408,5 @@ class NormsTest {
         }
 
         return sum.sqrt(ctx).doubleValue();
-    }
-
-    /** Compute the difference in ULP between the arguments.
-     * @param a first argument
-     * @param b second argument
-     * @return ULP difference between the arguments
-     */
-    private static int computeUlpDifference(final double a, final double b) {
-        return (int) (Double.doubleToLongBits(a) - Double.doubleToLongBits(b));
-    }
-
-    /** Construct a random vector of length {@code len} with double exponent values between
-     * {@code minExp} and {@code maxExp}.
-     * @param len vector length
-     * @param minExp minimum element exponent value
-     * @param maxExp maximum element exponent value
-     * @param rng random number generator
-     * @return random vector array
-     */
-    private static double[] randomVector(final int len, final int minExp, final int maxExp,
-            final UniformRandomProvider rng) {
-        final double[] v = new double[len];
-        for (int i = 0; i < v.length; ++i) {
-            v[i] = randomDouble(minExp, maxExp, rng);
-        }
-        return v;
-    }
-
-    /** Construct a random double with an exponent in the range {@code [minExp, maxExp]}.
-     * @param minExp minimum exponent
-     * @param maxExp maximum exponent
-     * @param rng random number generator
-     * @return random double value with an exponent in the specified range
-     */
-    private static double randomDouble(final int minExp, final int maxExp, final UniformRandomProvider rng) {
-        // Create random doubles using random bits in the sign bit and the mantissa.
-        final long mask = ((1L << 52) - 1) | 1L << 63;
-        final long bits = rng.nextLong() & mask;
-        // The exponent must be unsigned so + 1023 to the signed exponent
-        final int expRange = Math.abs(maxExp - minExp);
-        final long exp = rng.nextInt(expRange) + minExp + 1023;
-        return Double.longBitsToDouble(bits | (exp << 52));
     }
 }
