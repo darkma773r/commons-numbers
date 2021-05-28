@@ -35,7 +35,7 @@ final class DoubleTestUtils {
         return (int) (Double.doubleToLongBits(a) - Double.doubleToLongBits(b));
     }
 
-    /** Construct a random vector of length {@code len} with double exponent values between
+    /** Construct an array of length {@code len} containing random double values with exponents between
      * {@code minExp} and {@code maxExp}.
      * @param len vector length
      * @param minExp minimum element exponent value
@@ -43,7 +43,7 @@ final class DoubleTestUtils {
      * @param rng random number generator
      * @return random vector array
      */
-    public static double[] randomVector(final int len, final int minExp, final int maxExp,
+    public static double[] randomArray(final int len, final int minExp, final int maxExp,
             final UniformRandomProvider rng) {
         final double[] v = new double[len];
         for (int i = 0; i < v.length; ++i) {

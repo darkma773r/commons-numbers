@@ -125,8 +125,11 @@ class NormsTest {
         checkScaledEuclideanNorm(ones, 1, fn);
         checkScaledEuclideanNorm(ones, 0x1.0p500, fn);
         checkScaledEuclideanNorm(ones, 0x1.0p501, fn);
+        checkScaledEuclideanNorm(ones, 0x1.0p-200, fn);
+        checkScaledEuclideanNorm(ones, 0x1.0p-201, fn);
         checkScaledEuclideanNorm(ones, 0x1.0p-500, fn);
         checkScaledEuclideanNorm(ones, 0x1.0p-501, fn);
+
 
         checkScaledEuclideanNorm(multiplesOfTen, 1, fn);
         checkScaledEuclideanNorm(multiplesOfTen, 0x1.0p500, fn);
@@ -140,6 +143,25 @@ class NormsTest {
 
         // act/assert
         checkEuclideanRandom(2, rng, v -> Norms.euclidean(v[0], v[1]));
+    }
+
+    @Test
+    void testEuclidean_2d_vsArray() {
+        // arrange
+        final double[][] inputs = {
+            {-4.074598908124454E-9, 9.897869969944898E-28},
+            {1.3472131556526359E-27, -9.064577177323565E9},
+            {-3.9219339341360245E149, -7.132522817112096E148},
+            {-1.4888098520466735E153, -2.9099184907796666E150},
+            {-8.659395144898396E-152, -1.123275532302136E-150},
+            {-3.660198254902351E-152, -6.656524053354807E-153}
+        };
+
+        // act/assert
+        for (final double[] input : inputs) {
+            Assertions.assertEquals(Norms.euclidean(input), Norms.euclidean(input[0], input[1]),
+                    () -> "Expected inline method result to equal array result for input " + Arrays.toString(input));
+        }
     }
 
     @Test
@@ -177,6 +199,8 @@ class NormsTest {
         checkScaledEuclideanNorm(ones, 1, fn);
         checkScaledEuclideanNorm(ones, 0x1.0p500, fn);
         checkScaledEuclideanNorm(ones, 0x1.0p501, fn);
+        checkScaledEuclideanNorm(ones, 0x1.0p-200, fn);
+        checkScaledEuclideanNorm(ones, 0x1.0p-201, fn);
         checkScaledEuclideanNorm(ones, 0x1.0p-500, fn);
         checkScaledEuclideanNorm(ones, 0x1.0p-501, fn);
 
@@ -192,6 +216,25 @@ class NormsTest {
 
         // act/assert
         checkEuclideanRandom(3, rng, v -> Norms.euclidean(v[0], v[1], v[2]));
+    }
+
+    @Test
+    void testEuclidean_3d_vsArray() {
+        // arrange
+        final double[][] inputs = {
+            {-4.074598908124454E-9, 9.897869969944898E-28, 7.849935157082846E-14},
+            {1.3472131556526359E-27, -9.064577177323565E9, 323771.526282239},
+            {-3.9219339341360245E149, -7.132522817112096E148, -3.427334456813165E147},
+            {-1.4888098520466735E153, -2.9099184907796666E150, 1.0144962310234785E152},
+            {-8.659395144898396E-152, -1.123275532302136E-150, -2.151505326692001E-152},
+            {-3.660198254902351E-152, -6.656524053354807E-153, -3.198606556986218E-154}
+        };
+
+        // act/assert
+        for (final double[] input : inputs) {
+            Assertions.assertEquals(Norms.euclidean(input), Norms.euclidean(input[0], input[1], input[2]),
+                    () -> "Expected inline method result to equal array result for input " + Arrays.toString(input));
+        }
     }
 
     @Test
@@ -342,7 +385,7 @@ class NormsTest {
             final UniformRandomProvider rng, final ToDoubleFunction<double[]> fn) {
         for (int i = 0; i < RAND_VECTOR_CNT; ++i) {
             // arrange
-            final double[] v = DoubleTestUtils.randomVector(len, minExp, maxExp, rng);
+            final double[] v = DoubleTestUtils.randomArray(len, minExp, maxExp, rng);
 
             final double exact = exactEuclideanNorm(v);
             final double direct = directEuclideanNorm(v);

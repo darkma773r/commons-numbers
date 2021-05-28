@@ -71,7 +71,10 @@ public final class Norms {
      * @see <a href="https://en.wikipedia.org/wiki/Norm_(mathematics)#Taxicab_norm_or_Manhattan_norm">Manhattan norm</a>
      */
     public static double manhattan(final double x, final double y, final double z) {
-        return Math.abs(x) + Math.abs(y) + Math.abs(z);
+        return Summation.value(
+                Math.abs(x),
+                Math.abs(y),
+                Math.abs(z));
     }
 
     /** Compute the Manhattan norm (also known as the Taxicab norm or L1 norm) of the given values.
@@ -88,11 +91,34 @@ public final class Norms {
      * @see <a href="https://en.wikipedia.org/wiki/Norm_(mathematics)#Taxicab_norm_or_Manhattan_norm">Manhattan norm</a>
      */
     public static double manhattan(final double[] v) {
-        double s = 0d;
+        double sum = 0d;
+        double corr = 0d;
+
         for (int i = 0; i < v.length; ++i) {
-            s += Math.abs(v[i]);
+            final double x = Math.abs(v[i]);
+            final double sx = sum + x;
+            corr += ExtendedPrecision.twoSumLow(sum, x, sx);
+            sum = sx;
         }
-        return s;
+        final double result = sum + corr;
+        if (!Double.isFinite(result)) {
+            // fall back to standard summation
+            return computeManhattanStandard(v);
+        }
+        return result;
+    }
+
+    /** Compute the Manhattan norm using standard double operations.
+     * This is used in edge cases to produce results consistent with IEEE 754 rules.
+     * @param v input values
+     * @return standard manhattan norm
+     */
+    private static double computeManhattanStandard(final double[] v) {
+        double sum = 0d;
+        for (int i = 0; i < v.length; ++i) {
+            sum += Math.abs(v[i]);
+        }
+        return sum;
     }
 
     /** Compute the Euclidean norm (also known as the L2 norm) of the arguments. The result is equal to

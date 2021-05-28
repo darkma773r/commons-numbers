@@ -16,16 +16,156 @@
  */
 package org.apache.commons.numbers.arrays;
 
-/** Class providing high-precision summations.
+/** Class providing accurate floating-point summations.
  */
 public final class Summation {
 
     /** Utility class; no instantiation. */
     private Summation() {}
 
-    /** Compute the sum of the given values.
+    /** Compute the sum of the input values.
+     * @param a first value
+     * @param b second value
+     * @param c third value
+     * @return sum of the input values
+     */
+    public static double value(final double a, final double b, final double c) {
+        double sum = a;
+        double corr = 0d;
+
+        final double sb = sum + b;
+        corr += ExtendedPrecision.twoSumLow(sum, b, sb);
+        sum = sb;
+
+        final double sc = sum + c;
+        corr += ExtendedPrecision.twoSumLow(sum, c, sc);
+        sum = sc;
+
+        final double result = sum + corr;
+        if (!Double.isFinite(result)) {
+            // non-finite result; fall back to standard summation
+            return a + b + c;
+        }
+
+        return result;
+    }
+
+    /** Compute the sum of the input values.
+     * @param a first value
+     * @param b second value
+     * @param c third value
+     * @param d fourth value
+     * @return sum of the input values
+     */
+    public static double value(final double a, final double b, final double c, final double d) {
+        double sum = a;
+        double corr = 0d;
+
+        final double sb = sum + b;
+        corr += ExtendedPrecision.twoSumLow(sum, b, sb);
+        sum = sb;
+
+        final double sc = sum + c;
+        corr += ExtendedPrecision.twoSumLow(sum, c, sc);
+        sum = sc;
+
+        final double sd = sum + d;
+        corr += ExtendedPrecision.twoSumLow(sum, d, sd);
+        sum = sd;
+
+        final double result = sum + corr;
+        if (!Double.isFinite(result)) {
+            // non-finite result; fall back to standard summation
+            return a + b + c + d ;
+        }
+
+        return result;
+    }
+
+    /** Compute the sum of the input values.
+     * @param a first value
+     * @param b second value
+     * @param c third value
+     * @param d fourth value
+     * @param e fifth value
+     * @return sum of the input values
+     */
+    public static double value(final double a, final double b, final double c, final double d,
+            final double e) {
+        double sum = a;
+        double corr = 0d;
+
+        final double sb = sum + b;
+        corr += ExtendedPrecision.twoSumLow(sum, b, sb);
+        sum = sb;
+
+        final double sc = sum + c;
+        corr += ExtendedPrecision.twoSumLow(sum, c, sc);
+        sum = sc;
+
+        final double sd = sum + d;
+        corr += ExtendedPrecision.twoSumLow(sum, d, sd);
+        sum = sd;
+
+        final double se = sum + e;
+        corr += ExtendedPrecision.twoSumLow(sum, e, se);
+        sum = se;
+
+        final double result = sum + corr;
+        if (!Double.isFinite(result)) {
+            // non-finite result; fall back to standard summation
+            return a + b + c + d + e;
+        }
+
+        return result;
+    }
+
+    /** Compute the sum of the input values.
+     * @param a first value
+     * @param b second value
+     * @param c third value
+     * @param d fourth value
+     * @param e fifth value
+     * @param f sixth value
+     * @return sum of the input values
+     */
+    public static double value(final double a, final double b, final double c, final double d,
+            final double e, final double f) {
+        double sum = a;
+        double corr = 0d;
+
+        final double sb = sum + b;
+        corr += ExtendedPrecision.twoSumLow(sum, b, sb);
+        sum = sb;
+
+        final double sc = sum + c;
+        corr += ExtendedPrecision.twoSumLow(sum, c, sc);
+        sum = sc;
+
+        final double sd = sum + d;
+        corr += ExtendedPrecision.twoSumLow(sum, d, sd);
+        sum = sd;
+
+        final double se = sum + e;
+        corr += ExtendedPrecision.twoSumLow(sum, e, se);
+        sum = se;
+
+        final double sf = sum + f;
+        corr += ExtendedPrecision.twoSumLow(sum, f, sf);
+        sum = sf;
+
+        final double result = sum + corr;
+        if (!Double.isFinite(result)) {
+            // non-finite result; fall back to standard summation
+            return a + b + c + d + e + f;
+        }
+
+        return result;
+    }
+
+    /** Compute the sum of the input values.
      * @param a array containing values to sum
-     * @return sum of input values
+     * @return sum of the input values
      */
     public static double value(final double[] a) {
         double sum = 0d;
@@ -39,6 +179,7 @@ public final class Summation {
 
         final double result = sum + corr;
         if (!Double.isFinite(result)) {
+            // non-finite result; fall back to standard summation
             return computeStandard(a);
         }
 

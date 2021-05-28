@@ -18,31 +18,175 @@ package org.apache.commons.numbers.arrays;
 
 import java.math.BigDecimal;
 import java.math.MathContext;
-import java.util.Arrays;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 class SummationTest {
 
-    private static final int MAX_ULP_ERR = 1;
-
     @Test
-    void testSimple_array() {
+    void test3n_simple() {
         // act/assert
-        assertArraySum(0);
-        assertArraySum(0, 0, 0, 0);
+        Assertions.assertEquals(0, Summation.value(0, 0, 0));
+        Assertions.assertEquals(6, Summation.value(1, 2, 3));
+        Assertions.assertEquals(2, Summation.value(1, -2, 3));
 
-        assertArraySum(1, 1, 1);
-        assertArraySum(-1, -1, -1);
+        Assertions.assertEquals(Double.NaN, Summation.value(Double.NaN, 0, 0));
+        Assertions.assertEquals(Double.NaN, Summation.value(0, Double.NaN, 0));
+        Assertions.assertEquals(Double.NaN, Summation.value(0, 0, Double.NaN));
 
-        assertArraySum(Math.PI, Math.E);
+        Assertions.assertEquals(Double.NaN, Summation.value(Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, 0));
+
+        Assertions.assertEquals(Double.POSITIVE_INFINITY,
+                Summation.value(Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE));
+
+        Assertions.assertEquals(Double.POSITIVE_INFINITY, Summation.value(Double.POSITIVE_INFINITY, 1, 1));
+        Assertions.assertEquals(Double.NEGATIVE_INFINITY, Summation.value(1, Double.NEGATIVE_INFINITY, 1));
     }
 
     @Test
-    public void testSpecialCases_array() {
+    void test3n_accuracy() {
+        // arrange
+        final double a = 9.999999999;
+        final double b = Math.scalb(a, -53);
+        final double c = Math.scalb(a, -53);
+
         // act/assert
-        Assertions.assertEquals(0d, Summation.value(new double[0]));
+        assertValue(a, b, c);
+        assertValue(c, b, a);
+
+        assertValue(a, -b, c);
+        assertValue(-c, b, -a);
+    }
+
+    @Test
+    void test4n_simple() {
+        // act/assert
+        Assertions.assertEquals(0, Summation.value(0, 0, 0, 0));
+        Assertions.assertEquals(10, Summation.value(1, 2, 3, 4));
+        Assertions.assertEquals(-2, Summation.value(1, -2, 3, -4));
+
+        Assertions.assertEquals(Double.NaN, Summation.value(Double.NaN, 0, 0, 0));
+        Assertions.assertEquals(Double.NaN, Summation.value(0, Double.NaN, 0, 0));
+        Assertions.assertEquals(Double.NaN, Summation.value(0, 0, Double.NaN, 0));
+        Assertions.assertEquals(Double.NaN, Summation.value(0, 0, 0, Double.NaN));
+
+        Assertions.assertEquals(Double.NaN, Summation.value(Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, 0, 0));
+
+        Assertions.assertEquals(Double.POSITIVE_INFINITY,
+                Summation.value(Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE));
+
+        Assertions.assertEquals(Double.POSITIVE_INFINITY, Summation.value(Double.POSITIVE_INFINITY, 1, 1, 1));
+        Assertions.assertEquals(Double.NEGATIVE_INFINITY, Summation.value(1, Double.NEGATIVE_INFINITY, 1, 1));
+    }
+
+    @Test
+    void test4n_accuracy() {
+        // arrange
+        final double a = 9.999999999;
+        final double b = Math.scalb(a, -53);
+        final double c = Math.scalb(a, -53);
+        final double d = Math.scalb(a, -27);
+
+        // act/assert
+        assertValue(a, b, c, d);
+        assertValue(d, c, b, a);
+
+        assertValue(a, -b, c, -d);
+        assertValue(d, -c, b, -a);
+    }
+
+    @Test
+    void test5n_simple() {
+        // act/assert
+        Assertions.assertEquals(0, Summation.value(0, 0, 0, 0, 0));
+        Assertions.assertEquals(15, Summation.value(1, 2, 3, 4, 5));
+        Assertions.assertEquals(3, Summation.value(1, -2, 3, -4, 5));
+
+        Assertions.assertEquals(Double.NaN, Summation.value(Double.NaN, 0, 0, 0, 0));
+        Assertions.assertEquals(Double.NaN, Summation.value(0, Double.NaN, 0, 0, 0));
+        Assertions.assertEquals(Double.NaN, Summation.value(0, 0, Double.NaN, 0, 0));
+        Assertions.assertEquals(Double.NaN, Summation.value(0, 0, 0, Double.NaN, 0));
+        Assertions.assertEquals(Double.NaN, Summation.value(0, 0, 0, 0, Double.NaN));
+
+        Assertions.assertEquals(Double.NaN, Summation.value(
+                Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, 0, 0, 0));
+
+        Assertions.assertEquals(Double.POSITIVE_INFINITY, Summation.value(
+                Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE));
+
+        Assertions.assertEquals(Double.POSITIVE_INFINITY, Summation.value(Double.POSITIVE_INFINITY, 1, 1, 1, 1));
+        Assertions.assertEquals(Double.NEGATIVE_INFINITY, Summation.value(1, Double.NEGATIVE_INFINITY, 1, 1, 1));
+    }
+
+    @Test
+    void test5n_accuracy() {
+        // arrange
+        final double a = 9.999999999;
+        final double b = Math.scalb(a, -53);
+        final double c = Math.scalb(a, -53);
+        final double d = Math.scalb(a, -27);
+        final double e = Math.scalb(a, -27);
+
+        // act/assert
+        assertValue(a, b, c, d, e);
+        assertValue(e, d, c, b, a);
+
+        assertValue(a, -b, c, -d, e);
+        assertValue(-e, d, -c, b, -a);
+    }
+
+    @Test
+    void test6n_simple() {
+        // act/assert
+        Assertions.assertEquals(0, Summation.value(0, 0, 0, 0, 0, 0));
+        Assertions.assertEquals(21, Summation.value(1, 2, 3, 4, 5, 6));
+        Assertions.assertEquals(-3, Summation.value(1, -2, 3, -4, 5, -6));
+
+        Assertions.assertEquals(Double.NaN, Summation.value(Double.NaN, 0, 0, 0, 0, 0));
+        Assertions.assertEquals(Double.NaN, Summation.value(0, Double.NaN, 0, 0, 0, 0));
+        Assertions.assertEquals(Double.NaN, Summation.value(0, 0, Double.NaN, 0, 0, 0));
+        Assertions.assertEquals(Double.NaN, Summation.value(0, 0, 0, Double.NaN, 0, 0));
+        Assertions.assertEquals(Double.NaN, Summation.value(0, 0, 0, 0, Double.NaN, 0));
+        Assertions.assertEquals(Double.NaN, Summation.value(0, 0, 0, 0, 0, Double.NaN));
+
+        Assertions.assertEquals(Double.NaN, Summation.value(
+                Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, 0, 0, 0, 0));
+
+        Assertions.assertEquals(Double.POSITIVE_INFINITY, Summation.value(
+                Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE,
+                Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE));
+
+        Assertions.assertEquals(Double.POSITIVE_INFINITY, Summation.value(Double.POSITIVE_INFINITY, 1, 1, 1, 1, 1));
+        Assertions.assertEquals(Double.NEGATIVE_INFINITY, Summation.value(1, Double.NEGATIVE_INFINITY, 1, 1, 1, 1));
+    }
+
+    @Test
+    void test6n_accuracy() {
+        // arrange
+        final double a = 9.999999999;
+        final double b = Math.scalb(a, -53);
+        final double c = Math.scalb(a, -53);
+        final double d = Math.scalb(a, -27);
+        final double e = Math.scalb(a, -27);
+        final double f = Math.scalb(a, -50);
+
+        // act/assert
+        assertValue(a, b, c, d, e, f);
+        assertValue(f, e, d, c, b, a);
+
+        assertValue(a, -b, c, -d, e, f);
+        assertValue(f, -e, d, -c, b, -a);
+    }
+
+    @Test
+    void testArray_simple() {
+        // act/assert
+        Assertions.assertEquals(0, Summation.value(new double[0]));
+        Assertions.assertEquals(-1, Summation.value(new double[] {-1}));
+        Assertions.assertEquals(0, Summation.value(new double[] {0, 0, 0}));
+        Assertions.assertEquals(6, Summation.value(new double[] {1, 2, 3}));
+        Assertions.assertEquals(2, Summation.value(new double[] {1, -2, 3}));
 
         Assertions.assertEquals(Double.MAX_VALUE, Summation.value(new double[] {Double.MAX_VALUE}));
         Assertions.assertEquals(Double.MIN_VALUE, Summation.value(new double[] {Double.MIN_VALUE}));
@@ -56,19 +200,78 @@ class SummationTest {
                 Summation.value(new double[] {Double.MAX_VALUE, Double.MAX_VALUE}));
         Assertions.assertEquals(Double.POSITIVE_INFINITY,
                 Summation.value(new double[] {Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY}));
+        Assertions.assertEquals(Double.NEGATIVE_INFINITY,
+                Summation.value(new double[] {Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY}));
     }
 
-    private static void assertArraySum(final double... values) {
+    @Test
+    void testArray_accuracy() {
+        // arrange
+        final double a = 9.999999999;
+        final double b = Math.scalb(a, -53);
+        final double c = Math.scalb(a, -53);
+        final double d = Math.scalb(a, -27);
+        final double e = Math.scalb(a, -27);
+        final double f = Math.scalb(a, -50);
+
+        // act/assert
+        assertArrayValue(a);
+
+        assertArrayValue(a, b);
+        assertArrayValue(b, a);
+
+        assertArrayValue(a, b, c);
+        assertArrayValue(c, b, a);
+
+        assertArrayValue(a, b, c, d);
+        assertArrayValue(d, c, b, a);
+
+        assertArrayValue(a, -b, c, -d);
+        assertArrayValue(d, -c, b, -a);
+
+        assertArrayValue(a, b, c, d, e, f);
+        assertArrayValue(f, e, d, c, b, a);
+
+        assertArrayValue(a, -b, c, -d, e, f);
+        assertArrayValue(f, -e, d, -c, b, -a);
+    }
+
+    private static void assertValue(final double a, final double b, final double c) {
+        final double computed = Summation.value(a, b, c);
+        assertComputedValue(computed, a, b, c);
+    }
+
+    private static void assertValue(final double a, final double b, final double c, final double d) {
+        final double computed = Summation.value(a, b, c, d);
+        assertComputedValue(computed, a, b, c, d);
+    }
+
+    private static void assertValue(final double a, final double b, final double c, final double d,
+            final double e) {
+        final double computed = Summation.value(a, b, c, d, e);
+        assertComputedValue(computed, a, b, c, d, e);
+    }
+
+    private static void assertValue(final double a, final double b, final double c, final double d,
+            final double e, final double f) {
+        final double computed = Summation.value(a, b, c, d, e, f);
+        assertComputedValue(computed, a, b, c, d, e, f);
+    }
+
+    private static void assertArrayValue(final double... values) {
+        final double computed = Summation.value(values);
+        assertComputedValue(computed, values);
+    }
+
+    private static void assertComputedValue(final double computed, final double... values) {
         final double exact = computeExact(values);
-        final double actual = Summation.value(values);
-
-        final int ulpError = DoubleTestUtils.computeUlpDifference(exact, actual);
-
-        Assertions.assertTrue(ulpError <= MAX_ULP_ERR, () ->
-        "Computed norm ulp error exceeds bounds; values= " + Arrays.toString(values) +
-        ", exact= " + exact + ", actual= " + actual + ", ulpError= " + ulpError);
+        Assertions.assertEquals(exact, computed);
     }
 
+    /** Return the double estimation of the exact summation result computed with unlimited precision.
+     * @param values values to add
+     * @return double value closest to the exact result
+     */
     private static double computeExact(final double... values) {
         BigDecimal sum = BigDecimal.ZERO;
         for (double value : values) {
