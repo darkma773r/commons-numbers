@@ -36,7 +36,7 @@ import org.openjdk.jmh.annotations.Warmup;
 import org.openjdk.jmh.infra.Blackhole;
 
 /**
- * Execute benchmarks for the algorithms in the {@link EuclideanNorms} class.
+ * Execute benchmarks for the algorithms in the {@link EuclideanNormAlgorithms} class.
  */
 @BenchmarkMode(Mode.AverageTime)
 @OutputTimeUnit(TimeUnit.NANOSECONDS)

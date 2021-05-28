@@ -16,7 +16,14 @@
  */
 package org.apache.commons.numbers.arrays;
 
-/** Class containing methods to compute various norm values.
+/** Class providing methods to compute various norm values.
+ *
+ * <p>This class uses a variety of techniques to increase numerical accuracy
+ * and reduce errors. Primary sources for the included algorithms are the
+ * 2005 paper <a href="https://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.2.1547">
+ * Accurate Sum and Dot Product</a> by Takeshi Ogita, Siegfried M. Rump,
+ * and Shin'ichi Oishi published in <em>SIAM J. Sci. Comput</em> and the
+ * <a href="http://www.netlib.org/minpack">minpack</a> "enorm" subroutine.
  * @see <a href="https://en.wikipedia.org/wiki/Norm_(mathematics)">Norm</a>
  */
 public final class Norms {
@@ -92,43 +99,31 @@ public final class Norms {
      */
     public static double manhattan(final double[] v) {
         double sum = 0d;
-        double corr = 0d;
+        double comp = 0d;
 
         for (int i = 0; i < v.length; ++i) {
             final double x = Math.abs(v[i]);
             final double sx = sum + x;
-            corr += ExtendedPrecision.twoSumLow(sum, x, sx);
+            comp += ExtendedPrecision.twoSumLow(sum, x, sx);
             sum = sx;
         }
-        final double result = sum + corr;
-        if (!Double.isFinite(result)) {
-            // fall back to standard summation
-            return computeManhattanStandard(v);
-        }
-        return result;
-    }
 
-    /** Compute the Manhattan norm using standard double operations.
-     * This is used in edge cases to produce results consistent with IEEE 754 rules.
-     * @param v input values
-     * @return standard manhattan norm
-     */
-    private static double computeManhattanStandard(final double[] v) {
-        double sum = 0d;
-        for (int i = 0; i < v.length; ++i) {
-            sum += Math.abs(v[i]);
-        }
-        return sum;
+        return Summation.summationResult(sum, comp);
     }
 
     /** Compute the Euclidean norm (also known as the L2 norm) of the arguments. The result is equal to
-     * \(\sqrt{x^2 + y^2}\).
+     * \(\sqrt{x^2 + y^2}\). This method correctly handles the possibility of overflow or underflow
+     * during the computation.
      *
      * <p>Special cases:
      * <ul>
      *  <li>If either value is NaN, then the result is NaN.</li>
      *  <li>If either value is infinite and the other value is not NaN, then the result is positive infinity.</li>
      * </ul>
+     *
+     * <p><strong>Comparison with Math.hypot()</strong>
+     * <p>While not guaranteed to return the same result, this method does provide similar error bounds to
+     * the JDK's Math.hypot() method and may run faster on some JVMs.
      * @param x first input
      * @param y second input
      * @return Euclidean norm
@@ -164,29 +159,30 @@ public final class Norms {
         }
 
         double sum = 0d;
-        double corr = 0d;
+        double comp = 0d;
 
         // add scaled x
         double sx = xabs * scale;
         final double px = sx * sx;
-        corr += ExtendedPrecision.squareLowUnscaled(sx, px);
+        comp += ExtendedPrecision.squareLowUnscaled(sx, px);
         final double sumPx = sum + px;
-        corr += ExtendedPrecision.twoSumLow(sum, px, sumPx);
+        comp += ExtendedPrecision.twoSumLow(sum, px, sumPx);
         sum = sumPx;
 
         // add scaled y
         double sy = yabs * scale;
         final double py = sy * sy;
-        corr += ExtendedPrecision.squareLowUnscaled(sy, py);
+        comp += ExtendedPrecision.squareLowUnscaled(sy, py);
         final double sumPy = sum + py;
-        corr += ExtendedPrecision.twoSumLow(sum, py, sumPy);
+        comp += ExtendedPrecision.twoSumLow(sum, py, sumPy);
         sum = sumPy;
 
-        return Math.sqrt(sum + corr) * rescale;
+        return Math.sqrt(sum + comp) * rescale;
     }
 
     /** Compute the Euclidean norm (also known as the L2 norm) of the arguments. The result is equal to
-     * \(\sqrt{x^2 + y^2 + z^2}\).
+     * \(\sqrt{x^2 + y^2 + z^2}\). This method correctly handles the possibility of overflow or underflow
+     * during the computation.
      *
      * <p>Special cases:
      * <ul>
@@ -230,37 +226,38 @@ public final class Norms {
         }
 
         double sum = 0d;
-        double corr = 0d;
+        double comp = 0d;
 
         // add scaled x
         double sx = xabs * scale;
         final double px = sx * sx;
-        corr += ExtendedPrecision.squareLowUnscaled(sx, px);
+        comp += ExtendedPrecision.squareLowUnscaled(sx, px);
         final double sumPx = sum + px;
-        corr += ExtendedPrecision.twoSumLow(sum, px, sumPx);
+        comp += ExtendedPrecision.twoSumLow(sum, px, sumPx);
         sum = sumPx;
 
         // add scaled y
         double sy = yabs * scale;
         final double py = sy * sy;
-        corr += ExtendedPrecision.squareLowUnscaled(sy, py);
+        comp += ExtendedPrecision.squareLowUnscaled(sy, py);
         final double sumPy = sum + py;
-        corr += ExtendedPrecision.twoSumLow(sum, py, sumPy);
+        comp += ExtendedPrecision.twoSumLow(sum, py, sumPy);
         sum = sumPy;
 
         // add scaled z
         final double sz = zabs * scale;
         final double pz = sz * sz;
-        corr += ExtendedPrecision.squareLowUnscaled(sz, pz);
+        comp += ExtendedPrecision.squareLowUnscaled(sz, pz);
         final double sumPz = sum + pz;
-        corr += ExtendedPrecision.twoSumLow(sum, pz, sumPz);
+        comp += ExtendedPrecision.twoSumLow(sum, pz, sumPz);
         sum = sumPz;
 
-        return Math.sqrt(sum + corr) * rescale;
+        return Math.sqrt(sum + comp) * rescale;
     }
 
     /** Compute the Euclidean norm (also known as the L2 norm) of the given values. The result is equal to
-     * \(\sqrt{v_0^2 + ... + v_i^2}\).
+     * \(\sqrt{v_0^2 + ... + v_i^2}\). This method correctly handles the possibility of overflow or underflow
+     * during the computation.
      *
      * <p>Special cases:
      * <ul>
@@ -278,7 +275,7 @@ public final class Norms {
         double s2 = 0;
         double s3 = 0;
 
-        // sum correction values
+        // sum compensation values
         double c1 = 0;
         double c2 = 0;
         double c3 = 0;
@@ -286,16 +283,17 @@ public final class Norms {
         for (int i = 0; i < v.length; ++i) {
             final double x = Math.abs(v[i]);
             if (!Double.isFinite(x)) {
+                // not finite; determine whether to return NaN or positive infinity
                 return euclideanNormSpecial(v, i);
             } else if (x > LARGE_THRESH) {
                 // scale down
                 final double sx = x * SCALE_DOWN;
 
-                // compute the product and product correction
+                // compute the product and product compensation
                 final double p = sx * sx;
                 final double cp = ExtendedPrecision.squareLowUnscaled(sx, p);
 
-                // compute the running sum and sum correction
+                // compute the running sum and sum compensation
                 final double s = s1 + p;
                 final double cs = ExtendedPrecision.twoSumLow(s1, p, s);
 
@@ -306,11 +304,11 @@ public final class Norms {
                 // scale up
                 final double sx = x * SCALE_UP;
 
-                // compute the product and product correction
+                // compute the product and product compensation
                 final double p = sx * sx;
                 final double cp = ExtendedPrecision.squareLowUnscaled(sx, p);
 
-                // compute the running sum and sum correction
+                // compute the running sum and sum compensation
                 final double s = s3 + p;
                 final double cs = ExtendedPrecision.twoSumLow(s3, p, s);
 
@@ -319,11 +317,11 @@ public final class Norms {
                 s3 = s;
             } else {
                 // no scaling
-                // compute the product and product correction
+                // compute the product and product compensation
                 final double p = x * x;
                 final double cp = ExtendedPrecision.squareLowUnscaled(x, p);
 
-                // compute the running sum and sum correction
+                // compute the running sum and sum compensation
                 final double s = s2 + p;
                 final double cs = ExtendedPrecision.twoSumLow(s2, p, s);
 
@@ -341,14 +339,14 @@ public final class Norms {
             // add s1, s2, c1, c2
             final double s2Adj = s2 * SCALE_DOWN * SCALE_DOWN;
             final double sum = s1 + s2Adj;
-            final double corr = ExtendedPrecision.twoSumLow(s1, s2Adj, sum) + c1 + (c2 * SCALE_DOWN * SCALE_DOWN);
-            return Math.sqrt(sum + corr) * SCALE_UP;
+            final double comp = ExtendedPrecision.twoSumLow(s1, s2Adj, sum) + c1 + (c2 * SCALE_DOWN * SCALE_DOWN);
+            return Math.sqrt(sum + comp) * SCALE_UP;
         } else if (s2 != 0) {
             // add s2, s3, c2, c3
             final double s3Adj = s3 * SCALE_DOWN * SCALE_DOWN;
             final double sum = s2 + s3Adj;
-            final double corr = ExtendedPrecision.twoSumLow(s2, s3Adj, sum) + c2 + (c3 * SCALE_DOWN * SCALE_DOWN);
-            return Math.sqrt(sum + corr);
+            final double comp = ExtendedPrecision.twoSumLow(s2, s3Adj, sum) + c2 + (c3 * SCALE_DOWN * SCALE_DOWN);
+            return Math.sqrt(sum + comp);
         }
         // add s3, c3
         return Math.sqrt(s3 + c3) * SCALE_DOWN;

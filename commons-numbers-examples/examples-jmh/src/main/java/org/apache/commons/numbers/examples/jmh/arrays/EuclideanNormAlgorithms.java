@@ -468,13 +468,13 @@ public final class EuclideanNormAlgorithms {
          * @param xx Square of the factor (x * x).
          * @return the low part of the product double length number
          */
-       private static double productLowUnscaled(double x, double xx) {
-           // Split the numbers using Dekker's algorithm without scaling
-           final double hx = DoublePrecision.highPartUnscaled(x);
-           final double lx = x - hx;
+        private static double productLowUnscaled(double x, double xx) {
+            // Split the numbers using Dekker's algorithm without scaling
+            final double hx = DoublePrecision.highPartUnscaled(x);
+            final double lx = x - hx;
 
-           return DoublePrecision.productLow(hx, lx, hx, lx, xx);
-       }
+            return DoublePrecision.productLow(hx, lx, hx, lx, xx);
+        }
     }
 
     /** Modification of {@link ExtendedPrecisionLinearCombination} that only uses a single pass through
@@ -586,13 +586,13 @@ public final class EuclideanNormAlgorithms {
          * @param xx Square of the factor (x * x).
          * @return the low part of the product double length number
          */
-       private static double productLowUnscaled(double x, double xx) {
-           // Split the numbers using Dekker's algorithm without scaling
-           final double hx = DoublePrecision.highPartUnscaled(x);
-           final double lx = x - hx;
+        private static double productLowUnscaled(double x, double xx) {
+            // Split the numbers using Dekker's algorithm without scaling
+            final double hx = DoublePrecision.highPartUnscaled(x);
+            final double lx = x - hx;
 
-           return DoublePrecision.productLow(hx, lx, hx, lx, xx);
-       }
+            return DoublePrecision.productLow(hx, lx, hx, lx, xx);
+        }
     }
 
     /** Modification of {@link ExtendedPrecisionLinearCombination} that only uses a single pass through
@@ -712,13 +712,13 @@ public final class EuclideanNormAlgorithms {
          * @param xx Square of the factor (x * x).
          * @return the low part of the product double length number
          */
-       private static double productLowUnscaled(double x, double xx) {
-           // Split the numbers using Dekker's algorithm without scaling
-           final double hx = DoublePrecision.highPartUnscaled(x);
-           final double lx = x - hx;
+        private static double productLowUnscaled(double x, double xx) {
+            // Split the numbers using Dekker's algorithm without scaling
+            final double hx = DoublePrecision.highPartUnscaled(x);
+            final double lx = x - hx;
 
-           return DoublePrecision.productLow(hx, lx, hx, lx, xx);
-       }
+            return DoublePrecision.productLow(hx, lx, hx, lx, xx);
+        }
 
        /**
         * Compute the extended precision square root from the split number
@@ -730,20 +730,20 @@ public final class EuclideanNormAlgorithms {
         * @param xx the low part
         * @return the double
         */
-       private static double sqrt2(final double x, final double xx) {
-           if (x > 0) {
-               double c = Math.sqrt(x);
-               double u = c * c;
-               //double uu = ExtendedPrecision.productLow(c, c, u);
-               // Here we use the optimised version:
-               double uu = productLowUnscaled(c, u);
-               double cc = (x - u - uu + xx) * 0.5 / c;
-               // Extended precision sqrt (y, yy)
-               // y = c + cc
-               // yy = c - y + cc (ignored)
-               return c + cc;
-           }
-           return x;
-       }
+        private static double sqrt2(final double x, final double xx) {
+            if (x > 0) {
+                double c = Math.sqrt(x);
+                double u = c * c;
+                //double uu = ExtendedPrecision.productLow(c, c, u);
+                // Here we use the optimised version:
+                double uu = productLowUnscaled(c, u);
+                double cc = (x - u - uu + xx) * 0.5 / c;
+                // Extended precision sqrt (y, yy)
+                // y = c + cc
+                // yy = c - y + cc (ignored)
+                return c + cc;
+            }
+            return x;
+        }
     }
 }

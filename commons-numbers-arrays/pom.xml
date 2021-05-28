@@ -32,6 +32,7 @@
   <description>Array utilities.</description>
 
   <properties>
+    <!-- JDK 9+ required for BigDecimal.sqrt() method in unit tests. -->
     <maven.compiler.testSource>1.9</maven.compiler.testSource>
     <maven.compiler.testTarget>1.9</maven.compiler.testTarget>
 

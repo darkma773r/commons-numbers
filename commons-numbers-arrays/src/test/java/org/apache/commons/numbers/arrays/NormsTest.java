@@ -32,6 +32,8 @@ class NormsTest {
 
     private static final int MAX_ULP_ERR = 1;
 
+    private static final double HYPOT_COMPARE_EPS = 1e-2;
+
     @Test
     void testManhattan_2d() {
         // act/assert
@@ -97,6 +99,8 @@ class NormsTest {
         Assertions.assertEquals(1d, Norms.euclidean(1d, 0d));
         Assertions.assertEquals(1d, Norms.euclidean(0d, 1d));
         Assertions.assertEquals(5d, Norms.euclidean(-3d, 4d));
+        Assertions.assertEquals(Double.MIN_VALUE, Norms.euclidean(0d, Double.MIN_VALUE));
+        Assertions.assertEquals(Double.MAX_VALUE, Norms.euclidean(Double.MAX_VALUE, 0d));
         Assertions.assertEquals(Double.POSITIVE_INFINITY, Norms.euclidean(Double.MAX_VALUE, Double.MAX_VALUE));
 
         Assertions.assertEquals(Math.sqrt(2), Norms.euclidean(1d, -1d));
@@ -160,8 +164,55 @@ class NormsTest {
         // act/assert
         for (final double[] input : inputs) {
             Assertions.assertEquals(Norms.euclidean(input), Norms.euclidean(input[0], input[1]),
-                    () -> "Expected inline method result to equal array result for input " + Arrays.toString(input));
+                () -> "Expected inline method result to equal array result for input " + Arrays.toString(input));
         }
+    }
+
+    @Test
+    void testEuclidean_2d_vsHypot() {
+        // arrange
+        final int samples = 1000;
+        final UniformRandomProvider rng = RandomSource.create(RandomSource.XO_RO_SHI_RO_1024_PP, 2L);
+
+        // act/assert
+        assertEuclidean2dVersusHypot(-10, +10, samples, rng);
+        assertEuclidean2dVersusHypot(0, +20, samples, rng);
+        assertEuclidean2dVersusHypot(-20, 0, samples, rng);
+        assertEuclidean2dVersusHypot(-20, +20, samples, rng);
+        assertEuclidean2dVersusHypot(-100, +100, samples, rng);
+        assertEuclidean2dVersusHypot(+490, +510, samples, rng);
+        assertEuclidean2dVersusHypot(-510, -490, samples, rng);
+        assertEuclidean2dVersusHypot(-600, +600, samples, rng);
+    }
+
+    /** Assert that the Norms euclidean 2D computation produces similar error behavior to Math.hypot().
+     * @param minExp minimum exponent for random inputs
+     * @param maxExp maximum exponent for random inputs
+     * @param samples sample count
+     * @param rng random number generator
+     */
+    private static void assertEuclidean2dVersusHypot(final int minExp, final int maxExp, final int samples,
+            final UniformRandomProvider rng) {
+        // generate random inputs
+        final double[][] inputs = new double[samples][];
+        for (int i = 0; i < samples; ++i) {
+            inputs[i] = DoubleTestUtils.randomArray(2, minExp, maxExp, rng);
+        }
+
+        // compute exact results
+        final double[] exactResults = new double[samples];
+        for (int i = 0; i < samples; ++i) {
+            exactResults[i] = exactEuclideanNorm(inputs[i]);
+        }
+
+        // compute the std devs
+        final double hypotResult = computeUlpErrorStdDev(inputs, exactResults, v -> Math.hypot(v[0], v[1]));
+        final double normResult = computeUlpErrorStdDev(inputs, exactResults, v -> Norms.euclidean(v[0], v[1]));
+
+        // ensure that we are within the ballpark of Math.hypot
+        Assertions.assertTrue(normResult <= (hypotResult + HYPOT_COMPARE_EPS),
+            () -> "Expected 2D norm result to have similar error bounds to Math.hypot(): hypot error= " + hypotResult +
+                ", norm error= " + normResult);
     }
 
     @Test
@@ -172,6 +223,8 @@ class NormsTest {
         Assertions.assertEquals(1d, Norms.euclidean(0d, 1d, 0d));
         Assertions.assertEquals(1d, Norms.euclidean(0d, 0d, 1d));
         Assertions.assertEquals(5 * Math.sqrt(2), Norms.euclidean(-3d, -4d, 5d));
+        Assertions.assertEquals(Double.MIN_VALUE, Norms.euclidean(0d, 0d, Double.MIN_VALUE));
+        Assertions.assertEquals(Double.MAX_VALUE, Norms.euclidean(Double.MAX_VALUE, 0d, 0d));
         Assertions.assertEquals(Double.POSITIVE_INFINITY, Norms.euclidean(0d, Double.MAX_VALUE, Double.MAX_VALUE));
 
         Assertions.assertEquals(Math.sqrt(3), Norms.euclidean(1d, -1d, 1d));
@@ -233,7 +286,7 @@ class NormsTest {
         // act/assert
         for (final double[] input : inputs) {
             Assertions.assertEquals(Norms.euclidean(input), Norms.euclidean(input[0], input[1], input[2]),
-                    () -> "Expected inline method result to equal array result for input " + Arrays.toString(input));
+                () -> "Expected inline method result to equal array result for input " + Arrays.toString(input));
         }
     }
 
@@ -249,6 +302,9 @@ class NormsTest {
 
         final double[] longVec = new double[] {-0.9, 8.7, -6.5, -4.3, -2.1, 0, 1.2, 3.4, -5.6, 7.8, 9.0};
         Assertions.assertEquals(directEuclideanNorm(longVec), Norms.euclidean(longVec));
+
+        Assertions.assertEquals(Double.MIN_VALUE, Norms.euclidean(new double[] {0d, Double.MIN_VALUE}));
+        Assertions.assertEquals(Double.MAX_VALUE, Norms.euclidean(new double[] {Double.MAX_VALUE, 0d}));
 
         Assertions.assertEquals(Double.POSITIVE_INFINITY,
                 Norms.euclidean(new double[] {Double.MAX_VALUE, Double.MAX_VALUE}));
@@ -451,5 +507,41 @@ class NormsTest {
         }
 
         return sum.sqrt(ctx).doubleValue();
+    }
+
+    /** Compute the standard deviation of the ulp error of {@code fn} for the given inputs and
+     * array of exact results.
+     * @param inputs sample inputs
+     * @param exactResults array containing the exact expected results
+     * @param fn function to perform the computation
+     * @return ulp error standard deviation
+     */
+    private static double computeUlpErrorStdDev(final double[][] inputs, final double[] exactResults,
+            final ToDoubleFunction<double[]> fn) {
+
+        // compute the ulp errors for each input
+        final int[] ulpErrors = new int[inputs.length];
+        int sum = 0;
+        for (int i = 0; i < inputs.length; ++i) {
+            final double exact = exactResults[i];
+            final double actual = fn.applyAsDouble(inputs[i]);
+
+            final int error = DoubleTestUtils.computeUlpDifference(exact, actual);
+            ulpErrors[i] = error;
+            sum += error;
+        }
+
+        // compute the mean
+        final double mean = sum / (double) ulpErrors.length;
+
+        // compute the std dev
+        double diffSumSq = 0d;
+        double diff;
+        for (int ulpError : ulpErrors) {
+            diff = ulpError - mean;
+            diffSumSq += diff * diff;
+        }
+
+        return Math.sqrt(diffSumSq / (inputs.length - 1));
     }
 }
