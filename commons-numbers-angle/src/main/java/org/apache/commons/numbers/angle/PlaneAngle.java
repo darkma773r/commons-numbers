@@ -21,7 +21,7 @@ import java.util.function.UnaryOperator;
 /**
  * Represents the <a href="https://en.wikipedia.org/wiki/Angle">angle</a> concept.
  */
-public final class PlaneAngle {
+public class PlaneAngle {
     /** Zero. */
     public static final PlaneAngle ZERO = new PlaneAngle(0);
     /** Half-turn (aka &pi; radians). */
@@ -59,7 +59,7 @@ public final class PlaneAngle {
      * @return a new intance.
      */
     public static PlaneAngle ofRadians(double angle) {
-        return new PlaneAngle(angle * FROM_RADIANS);
+        return new PlaneAngleOfRadians(angle);
     }
 
     /**
@@ -146,16 +146,20 @@ public final class PlaneAngle {
          */
         @Override
         public PlaneAngle apply(PlaneAngle a) {
-            final double normalized = reduce.applyAsDouble(a.value) + lowerBound;
-            return normalized < upperBound ?
-                new PlaneAngle(normalized) :
-                // If value is too small to be representable compared to the
-                // floor expression above (ie, if value + x = x), then we may
-                // end up with a number exactly equal to the upper bound here.
-                // In that case, subtract one from the normalized value so that
-                // we can fulfill the contract of only returning results strictly
-                // less than the upper bound.
-                new PlaneAngle(normalized - 1);
+            if (a.value < lowerBound || a.value >= upperBound) {
+                final double normalized = reduce.applyAsDouble(a.value) + lowerBound;
+                return normalized < upperBound ?
+                    new PlaneAngle(normalized) :
+                    // If value is too small to be representable compared to the
+                    // floor expression above (ie, if value + x = x), then we may
+                    // end up with a number exactly equal to the upper bound here.
+                    // In that case, subtract one from the normalized value so that
+                    // we can fulfill the contract of only returning results strictly
+                    // less than the upper bound.
+                    new PlaneAngle(normalized - 1);
+            }
+
+            return a;
         }
     }
 
@@ -167,5 +171,22 @@ public final class PlaneAngle {
      */
     public static Normalizer normalizer(PlaneAngle center) {
         return new Normalizer(center);
+    }
+
+    private static final class PlaneAngleOfRadians extends PlaneAngle {
+
+        private final double radians;
+
+        PlaneAngleOfRadians(final double radians) {
+            super(radians * FROM_RADIANS);
+
+            this.radians = radians;
+        }
+
+        /** {@inheritDoc} */
+        @Override
+        public double toRadians() {
+            return radians;
+        }
     }
 }

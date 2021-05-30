@@ -159,6 +159,33 @@ class PlaneAngleTest {
     }
 
     @Test
+    void testNormalizeNumericalAccuracy() {
+        // arrange
+        final double aboveZero = Math.nextUp(0d);
+        final double belowZero = Math.nextDown(0d);
+        final double abovePi = Math.nextUp(Math.PI);
+        final double belowPi = Math.nextDown(Math.PI);
+
+        // act/assert
+        assertNormalizeRadiansExact(aboveZero, aboveZero, 0d);
+        assertNormalizeRadiansExact(aboveZero, aboveZero, Math.PI);
+
+        assertNormalizeRadiansExact(belowZero, belowZero, 0d);
+        assertNormalizeRadiansExact(belowZero, belowZero, Math.PI);
+
+        assertNormalizeRadiansExact(abovePi - PlaneAngleRadians.TWO_PI, abovePi, 0d);
+        assertNormalizeRadiansExact(abovePi, abovePi, Math.PI);
+
+        assertNormalizeRadiansExact(belowPi, belowPi, 0d);
+        assertNormalizeRadiansExact(belowPi, belowPi, Math.PI);
+    }
+
+    private static void assertNormalizeRadiansExact(final double expected, final double radians, final double center) {
+        Assertions.assertEquals(expected,
+                PlaneAngle.normalizer(PlaneAngle.ofRadians(radians)).apply(PlaneAngle.ofRadians(center)).toRadians());
+    }
+
+    @Test
     void testHashCode() {
         // Test assumes that the internal representation is in "turns".
         final double value = -123.456789;
