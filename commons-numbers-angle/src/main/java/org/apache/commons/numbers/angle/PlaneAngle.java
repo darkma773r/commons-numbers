@@ -16,177 +16,366 @@
  */
 package org.apache.commons.numbers.angle;
 
+import java.util.function.DoubleFunction;
+import java.util.function.ToDoubleFunction;
 import java.util.function.UnaryOperator;
 
-/**
- * Represents the <a href="https://en.wikipedia.org/wiki/Angle">angle</a> concept.
- */
-public class PlaneAngle {
-    /** Zero. */
-    public static final PlaneAngle ZERO = new PlaneAngle(0);
-    /** Half-turn (aka &pi; radians). */
-    public static final PlaneAngle PI = new PlaneAngle(0.5);
-    /** Conversion factor. */
-    private static final double HALF_TURN = 0.5;
-    /** Conversion factor. */
-    private static final double TO_RADIANS = PlaneAngleRadians.TWO_PI;
-    /** Conversion factor. */
-    private static final double FROM_RADIANS = 1d / TO_RADIANS;
-    /** Conversion factor. */
-    private static final double TO_DEGREES = 360;
-    /** Conversion factor. */
-    private static final double FROM_DEGREES = 1d / TO_DEGREES;
-    /** Value (in turns). */
+public abstract class PlaneAngle {
+
+    private static final double TURNS_TO_DEGREES = 360;
+    private static final double TURNS_TO_RADIANS = 2 * Math.PI;
+
+    private static final double DEGREES_TO_TURNS = 1d / TURNS_TO_DEGREES;
+    private static final double DEGREES_TO_RADIANS = Math.PI / 180;
+
+    private static final double RADIANS_TO_TURNS = 1d / TURNS_TO_RADIANS;
+    private static final double RADIANS_TO_DEGREES = 180 / Math.PI;
+
     private final double value;
 
-    /**
-     * @param value Value in turns.
-     */
-    private PlaneAngle(double value) {
+    private PlaneAngle(final double value) {
         this.value = value;
     }
 
-    /**
-     * @param angle (in <a href="https://en.wikipedia.org/wiki/Turn_%28geometry%29">turns</a>).
-     * @return a new intance.
-     */
-    public static PlaneAngle ofTurns(double angle) {
-        return new PlaneAngle(angle);
-    }
-
-    /**
-     * @param angle (in <a href="https://en.wikipedia.org/wiki/Radian">radians</a>).
-     * @return a new intance.
-     */
-    public static PlaneAngle ofRadians(double angle) {
-        return new PlaneAngleOfRadians(angle);
-    }
-
-    /**
-     * @param angle (in <a href="https://en.wikipedia.org/wiki/Degree_%28angle%29">degrees</a>).
-     * @return a new intance.
-     */
-    public static PlaneAngle ofDegrees(double angle) {
-        return new PlaneAngle(angle * FROM_DEGREES);
-    }
-
-    /**
-     * @return the value in <a href="https://en.wikipedia.org/wiki/Turn_%28geometry%29">turns</a>.
-     */
-    public double toTurns() {
+    public double getValue() {
         return value;
     }
 
-    /**
-     * @return the value in <a href="https://en.wikipedia.org/wiki/Radian">radians</a>.
-     */
-    public double toRadians() {
-        return value * TO_RADIANS;
+    public abstract double turns();
+
+    public abstract double degrees();
+
+    public abstract double radians();
+
+    public abstract PlaneAngle addPeriod(double factor);
+
+    public PlaneAngle add(final PlaneAngle other) {
+        return getPreferredUnitOperations(this, other).add(this, other);
     }
 
-    /**
-     * @return the value in <a href="https://en.wikipedia.org/wiki/Degree_%28angle%29">degrees</a>.
-     */
-    public double toDegrees() {
-        return value * TO_DEGREES;
+    public PlaneAngle subtract(final PlaneAngle other) {
+        return getPreferredUnitOperations(this, other).subtract(this, other);
     }
 
-    /**
-     * Test for equality with another object.
-     * Objects are considered to be equal if the two values are exactly the
-     * same, or both are {@code Double.NaN}.
-     *
-     * @param other Object to test for equality with this instance.
-     * @return {@code true} if the objects are equal, {@code false} if
-     * {@code other} is {@code null}, not an instance of {@code PlaneAngle},
-     * or not equal to this instance.
-     */
-    @Override
-    public boolean equals(Object other) {
-        if (this == other) {
-            return true;
-        }
-        if (other instanceof PlaneAngle) {
-            return Double.doubleToLongBits(value) ==
-                    Double.doubleToLongBits(((PlaneAngle) other).value);
-        }
-        return false;
+    public abstract PlaneAngle multiply(final double x);
+
+    public PlaneAngle normalizeAbove(final PlaneAngle lowerBound) {
+        return null;
     }
 
-    /** {@inheritDoc} */
-    @Override
-    public int hashCode() {
-        return Double.hashCode(value);
+    public UnaryOperator<PlaneAngle> normalizerForLowerBound(final PlaneAngle lowerBound) {
+        // TODO
+        return null;
     }
 
-    /**
-     * Normalizes an angle in an interval of size 1 turn around a center value.
-     */
-    public static final class Normalizer implements UnaryOperator<PlaneAngle> {
-        /** Lower bound. */
-        private final double lowerBound;
-        /** Upper bound. */
-        private final double upperBound;
-        /** Normalizer. */
-        private final Reduce reduce;
-
-        /**
-         * @param center Center of the desired interval.
-         */
-        private Normalizer(PlaneAngle center) {
-            lowerBound = center.value - HALF_TURN;
-            upperBound = center.value + HALF_TURN;
-            reduce = new Reduce(lowerBound, 1d);
-        }
-
-        /**
-         * @param a Angle.
-         * @return {@code = a - k} where {@code k} is an integer that satisfies
-         * {@code center - 0.5 <= a - k < center + 0.5} (in turns).
-         */
-        @Override
-        public PlaneAngle apply(PlaneAngle a) {
-            if (a.value < lowerBound || a.value >= upperBound) {
-                final double normalized = reduce.applyAsDouble(a.value) + lowerBound;
-                return normalized < upperBound ?
-                    new PlaneAngle(normalized) :
-                    // If value is too small to be representable compared to the
-                    // floor expression above (ie, if value + x = x), then we may
-                    // end up with a number exactly equal to the upper bound here.
-                    // In that case, subtract one from the normalized value so that
-                    // we can fulfill the contract of only returning results strictly
-                    // less than the upper bound.
-                    new PlaneAngle(normalized - 1);
-            }
-
-            return a;
-        }
+    public Turns toTurns() {
+        return new Turns(turns());
     }
 
-    /**
-     * Factory method.
-     *
-     * @param center Center of the desired interval.
-     * @return a {@link Normalizer} instance.
-     */
-    public static Normalizer normalizer(PlaneAngle center) {
-        return new Normalizer(center);
+    public Degrees toDegrees() {
+        return new Degrees(degrees());
     }
 
-    private static final class PlaneAngleOfRadians extends PlaneAngle {
+    public Radians toRadians() {
+        return new Radians(radians());
+    }
 
-        private final double radians;
+    abstract UnitOperations<?> getUnitOperations();
 
-        PlaneAngleOfRadians(final double radians) {
-            super(radians * FROM_RADIANS);
+    public static Turns ofTurns(final double turns) {
+        return new Turns(turns);
+    }
 
-            this.radians = radians;
+    public static Degrees ofDegrees(final double deg) {
+        return new Degrees(deg);
+    }
+
+    public static Radians ofRadians(final double rad) {
+        return new Radians(rad);
+    }
+
+    private static UnitOperations<?> getPreferredUnitOperations(final PlaneAngle a, final PlaneAngle b) {
+        final UnitOperations<?> aOps = a.getUnitOperations();
+        final UnitOperations<?> bOps = a.getUnitOperations();
+
+        return aOps.priority > bOps.priority ? aOps : bOps;
+    }
+
+    public static final class Turns extends PlaneAngle {
+
+        private static final UnitOperations<Turns> OPS = new UnitOperations<>(0, 1, PlaneAngle::turns, Turns::new);
+
+        private Turns(final double value) {
+            super(value);
         }
 
         /** {@inheritDoc} */
         @Override
-        public double toRadians() {
-            return radians;
+        public double turns() {
+            return getValue();
+        }
+
+        /** {@inheritDoc} */
+        @Override
+        public double degrees() {
+            return getValue() * TURNS_TO_DEGREES;
+        }
+
+        /** {@inheritDoc} */
+        @Override
+        public double radians() {
+            return getValue() * TURNS_TO_RADIANS;
+        }
+
+        /** {@inheritDoc} */
+        @Override
+        public Turns addPeriod(final double factor) {
+            return getUnitOperations().addPeriod(this, factor);
+        }
+
+        public Turns add(final Turns other) {
+            return getUnitOperations().add(this, other);
+        }
+
+        public Turns subtract(final Turns other) {
+            return getUnitOperations().subtract(this, other);
+        }
+
+        /** {@inheritDoc} */
+        @Override
+        public Turns multiply(final double x) {
+            return getUnitOperations().multiply(this, x);
+        }
+
+        /** {@inheritDoc} */
+        @Override
+        public Turns toTurns() {
+            return this;
+        }
+
+        /** {@inheritDoc} */
+        @Override
+        UnitOperations<Turns> getUnitOperations() {
+            return OPS;
+        }
+    }
+
+    public static final class Degrees extends PlaneAngle {
+
+        private static final UnitOperations<Degrees> OPS =
+                new UnitOperations<>(1, 360, PlaneAngle::degrees, Degrees::new);
+
+        private Degrees(final double value) {
+            super(value);
+        }
+
+        /** {@inheritDoc} */
+        @Override
+        public double turns() {
+            return getValue() * DEGREES_TO_TURNS;
+        }
+
+        /** {@inheritDoc} */
+        @Override
+        public double degrees() {
+            return getValue();
+        }
+
+        /** {@inheritDoc} */
+        @Override
+        public double radians() {
+            return getValue() * DEGREES_TO_RADIANS;
+        }
+
+        /** {@inheritDoc} */
+        @Override
+        public Degrees addPeriod(final double factor) {
+            return getUnitOperations().addPeriod(this, factor);
+        }
+
+        public Degrees add(final Degrees other) {
+            return getUnitOperations().add(this, other);
+        }
+
+        public Degrees subtract(final Degrees other) {
+            return getUnitOperations().subtract(this, other);
+        }
+
+        /** {@inheritDoc} */
+        @Override
+        public Degrees multiply(final double x) {
+            return getUnitOperations().multiply(this, x);
+        }
+
+        /** {@inheritDoc} */
+        @Override
+        public Degrees toDegrees() {
+            return this;
+        }
+
+        /** {@inheritDoc} */
+        @Override
+        UnitOperations<Degrees> getUnitOperations() {
+            return OPS;
+        }
+    }
+
+    public static final class Radians extends PlaneAngle {
+
+        public static final Radians ZERO = new Radians(0);
+
+        public static final Radians PI = new Radians(Math.PI);
+
+        public static final Radians TWO_PI = new Radians(2 * Math.PI);
+
+        private static final UnitOperations<Radians> OPS =
+                new UnitOperations<>(2, 2 * Math.PI, PlaneAngle::radians, Radians::new);
+
+        private Radians(final double value) {
+            super(value);
+        }
+
+        /** {@inheritDoc} */
+        @Override
+        public double turns() {
+            return getValue() * RADIANS_TO_TURNS;
+        }
+
+        /** {@inheritDoc} */
+        @Override
+        public double degrees() {
+            return getValue() * RADIANS_TO_DEGREES;
+        }
+
+        /** {@inheritDoc} */
+        @Override
+        public double radians() {
+            return getValue();
+        }
+
+        /** {@inheritDoc} */
+        @Override
+        public Radians addPeriod(final double factor) {
+            return getUnitOperations().addPeriod(this, factor);
+        }
+
+        public Radians add(final Radians other) {
+            return getUnitOperations().add(this, other);
+        }
+
+        public Radians subtract(final Radians other) {
+            return getUnitOperations().subtract(this, other);
+        }
+
+        /** {@inheritDoc} */
+        @Override
+        public Radians multiply(final double x) {
+            return getUnitOperations().multiply(this, x);
+        }
+
+        /** {@inheritDoc} */
+        @Override
+        public Radians toRadians() {
+            return this;
+        }
+
+        /** {@inheritDoc} */
+        @Override
+        UnitOperations<Radians> getUnitOperations() {
+            return OPS;
+        }
+    }
+
+    private static final class UnitOperations<A extends PlaneAngle> {
+        private final int priority;
+        private final double period;
+        private final ToDoubleFunction<PlaneAngle> valueFn;
+        private final DoubleFunction<A> factory;
+
+        UnitOperations(final int priority, final double period, final ToDoubleFunction<PlaneAngle> valueFn,
+                final DoubleFunction<A> factory) {
+            this.priority = priority;
+            this.period = period;
+            this.valueFn = valueFn;
+            this.factory = factory;
+        }
+
+        A addPeriod(final PlaneAngle a, final double factor) {
+            final double aValue = getValue(a);
+
+            return createAngle(aValue + (factor * period));
+        }
+
+        A add(final PlaneAngle a, final PlaneAngle b) {
+            final double aValue = getValue(a);
+            final double bValue = getValue(b);
+
+            return factory.apply(aValue + bValue);
+        }
+
+        A subtract(final PlaneAngle a, final PlaneAngle b) {
+            final double aValue = getValue(a);
+            final double bValue = getValue(b);
+
+            return createAngle(aValue - bValue);
+        }
+
+        A multiply(final PlaneAngle a, final double x) {
+            final double aValue = getValue(a);
+
+            return createAngle(aValue * x);
+        }
+
+        double getValue(final PlaneAngle angle) {
+            return valueFn.applyAsDouble(angle);
+        }
+
+        A createAngle(final double value) {
+            return factory.apply(value);
+        }
+    }
+
+    private static final class Normalizer implements UnaryOperator<PlaneAngle> {
+
+        private final UnitOperations<?> ops;
+
+        private final double lowerBound;
+
+        private final double upperBound;
+
+        private final Reduce reduce;
+
+        Normalizer(final UnitOperations<?> ops, final double lowerBound, final double upperBound) {
+            this.ops = ops;
+            this.lowerBound = lowerBound;
+            this.upperBound = upperBound;
+            this.reduce = new Reduce(lowerBound, ops.period);
+        }
+
+        /** {@inheritDoc} */
+        @Override
+        public PlaneAngle apply(final PlaneAngle angle) {
+            final double value = ops.getValue(angle);
+            final double normalized = getNormalizedValue(value);
+
+            return ops.createAngle(normalized);
+        }
+
+        private double getNormalizedValue(final double value) {
+            if (value < lowerBound || value >= upperBound) {
+                final double normalized = reduce.applyAsDouble(value) + lowerBound;
+                return normalized < upperBound ?
+                    normalized :
+                    // If value is too small to be representable compared to the
+                    // floor expression above (ie, if value + x = x), then we may
+                    // end up with a number exactly equal to the upper bound here.
+                    // In that case, return the lower bound so we can fulfill the
+                    // contract of only returning results strictly less than the
+                    // upper bound.
+                    lowerBound;
+            }
+
+            return value;
         }
     }
 }

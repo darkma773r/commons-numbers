@@ -16,201 +16,108 @@
  */
 package org.apache.commons.numbers.angle;
 
-import java.util.function.UnaryOperator;
-
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-/**
- * Test cases for the {@link PlaneAngle} class.
- */
 class PlaneAngleTest {
-    @Test
-    void testConversionTurns() {
-        final double value = 12.3456;
-        final PlaneAngle a = PlaneAngle.ofTurns(value);
-        Assertions.assertEquals(value, a.toTurns());
-    }
 
     @Test
-    void testConversionRadians() {
-        final double one = 2 * Math.PI;
-        final double value = 12.3456 * one;
-        final PlaneAngle a = PlaneAngle.ofRadians(value);
-        Assertions.assertEquals(value, a.toRadians());
-    }
-
-    @Test
-    void testConversionDegrees() {
-        final double one = 360;
-        final double value = 12.3456 * one;
-        final PlaneAngle a = PlaneAngle.ofDegrees(value);
-        Assertions.assertEquals(value, a.toDegrees());
-    }
-
-    @Test
-    void testNormalizeRadians() {
-        for (double a = -15.0; a <= 15.0; a += 0.1) {
-            for (double b = -15.0; b <= 15.0; b += 0.2) {
-                final PlaneAngle aA = PlaneAngle.ofRadians(a);
-                final PlaneAngle aB = PlaneAngle.ofRadians(b);
-                final double c = PlaneAngle.normalizer(aB).apply(aA).toRadians();
-                Assertions.assertTrue((b - Math.PI) <= c);
-                Assertions.assertTrue(c <= (b + Math.PI));
-                double twoK = Math.rint((a - c) / Math.PI);
-                Assertions.assertEquals(c, a - twoK * Math.PI, 1e-14);
-            }
-        }
-    }
-
-    @Test
-    void testNormalizeMixed() {
-        for (double a = -15.0; a <= 15.0; a += 0.1) {
-            for (double b = -15.0; b <= 15.0; b += 0.2) {
-                final PlaneAngle aA = PlaneAngle.ofDegrees(a);
-                final PlaneAngle aB = PlaneAngle.ofRadians(b);
-                final double c = PlaneAngle.normalizer(aB).apply(aA).toTurns();
-                Assertions.assertTrue((aB.toTurns() - 0.5) <= c);
-                Assertions.assertTrue(c <= (aB.toTurns() + 0.5));
-                double twoK = Math.rint(aA.toTurns() - c);
-                Assertions.assertEquals(c, aA.toTurns() - twoK, 1e-14);
-            }
-        }
-    }
-
-    @Test
-    void testNormalizeAroundZero1() {
-        final double value = 1.25;
-        final double expected = 0.25;
-        final double actual = PlaneAngle.normalizer(PlaneAngle.ZERO).apply(PlaneAngle.ofTurns(value)).toTurns();
-        final double tol = Math.ulp(expected);
-        Assertions.assertEquals(expected, actual, tol);
-    }
-    @Test
-    void testNormalizeAroundZero2() {
-        final double value = 0.75;
-        final double expected = -0.25;
-        final double actual = PlaneAngle.normalizer(PlaneAngle.ZERO).apply(PlaneAngle.ofTurns(value)).toTurns();
-        final double tol = Math.ulp(expected);
-        Assertions.assertEquals(expected, actual, tol);
-    }
-    @Test
-    void testNormalizeAroundZero3() {
-        final double value = 0.5 + 1e-10;
-        final double expected = -0.5 + 1e-10;
-        final double actual = PlaneAngle.normalizer(PlaneAngle.ZERO).apply(PlaneAngle.ofTurns(value)).toTurns();
-        final double tol = Math.ulp(expected);
-        Assertions.assertEquals(expected, actual, tol);
-    }
-    @Test
-    void testNormalizeAroundZero4() {
-        final double value = 5 * Math.PI / 4;
-        final double expected = Math.PI * (1d / 4 - 1);
-        final double actual = PlaneAngle.normalizer(PlaneAngle.ZERO).apply(PlaneAngle.ofRadians(value)).toRadians();
-        final double tol = Math.ulp(expected);
-        Assertions.assertEquals(expected, actual, tol);
-    }
-
-    @Test
-    void testNormalizeUpperAndLowerBounds() {
-        final UnaryOperator<PlaneAngle> nZero = PlaneAngle.normalizer(PlaneAngle.ZERO);
-        final UnaryOperator<PlaneAngle> nPi = PlaneAngle.normalizer(PlaneAngle.PI);
-
-        // arrange
-        double eps = 1e-15;
+    void testOfTurns() {
+        // act
+        final PlaneAngle.Turns zero = PlaneAngle.ofTurns(0);
+        final PlaneAngle.Turns half = PlaneAngle.ofTurns(0.5);
+        final PlaneAngle.Turns minusHalf = PlaneAngle.ofTurns(-0.5);
+        final PlaneAngle.Turns full = PlaneAngle.ofTurns(1);
 
         // act/assert
-        Assertions.assertEquals(-0.5, nZero.apply(PlaneAngle.ofTurns(-0.5)).toTurns(), eps);
-        Assertions.assertEquals(-0.5, nZero.apply(PlaneAngle.ofTurns(0.5)).toTurns(), eps);
+        Assertions.assertEquals(0d, zero.getValue());
+        Assertions.assertEquals(0d, zero.turns());
+        Assertions.assertEquals(0d, zero.degrees());
+        Assertions.assertEquals(0d, zero.radians());
 
-        Assertions.assertEquals(-0.5, nZero.apply(PlaneAngle.ofTurns(-1.5)).toTurns(), eps);
-        Assertions.assertEquals(-0.5, nZero.apply(PlaneAngle.ofTurns(1.5)).toTurns(), eps);
+        Assertions.assertEquals(0.5, half.getValue());
+        Assertions.assertEquals(0.5, half.turns());
+        Assertions.assertEquals(180d, half.degrees());
+        Assertions.assertEquals(Math.PI, half.radians());
 
-        Assertions.assertEquals(0.0, nPi.apply(PlaneAngle.ofTurns(0)).toTurns(), eps);
-        Assertions.assertEquals(0.0, nPi.apply(PlaneAngle.ofTurns(1)).toTurns(), eps);
+        Assertions.assertEquals(-0.5, minusHalf.getValue());
+        Assertions.assertEquals(-0.5, minusHalf.turns());
+        Assertions.assertEquals(-180d, minusHalf.degrees());
+        Assertions.assertEquals(-Math.PI, minusHalf.radians());
 
-        Assertions.assertEquals(0.0, nPi.apply(PlaneAngle.ofTurns(-1)).toTurns(), eps);
-        Assertions.assertEquals(0.0, nPi.apply(PlaneAngle.ofTurns(2)).toTurns(), eps);
+        Assertions.assertEquals(1, full.getValue());
+        Assertions.assertEquals(1, full.turns());
+        Assertions.assertEquals(360d, full.degrees());
+        Assertions.assertEquals(2 * Math.PI, full.radians());
     }
 
     @Test
-    void testNormalizeVeryCloseToBounds() {
-        final UnaryOperator<PlaneAngle> nZero = PlaneAngle.normalizer(PlaneAngle.ZERO);
-        final UnaryOperator<PlaneAngle> nPi = PlaneAngle.normalizer(PlaneAngle.PI);
-
-        // arrange
-        double eps = 1e-22;
-
-        double small = 2e-16;
-        double tiny = 5e-17; // 0.5 + tiny = 0.5 (the value is too small to add to 0.5)
+    void testOfDegrees() {
+        // act
+        final PlaneAngle.Degrees zero = PlaneAngle.ofDegrees(0);
+        final PlaneAngle.Degrees half = PlaneAngle.ofDegrees(180);
+        final PlaneAngle.Degrees minusHalf = PlaneAngle.ofDegrees(-180);
+        final PlaneAngle.Degrees full = PlaneAngle.ofDegrees(360);
 
         // act/assert
-        Assertions.assertEquals(1.0 - small, nPi.apply(PlaneAngle.ofTurns(-small)).toTurns(), eps);
-        Assertions.assertEquals(small, nPi.apply(PlaneAngle.ofTurns(small)).toTurns(), eps);
+        Assertions.assertEquals(0d, zero.getValue());
+        Assertions.assertEquals(0d, zero.turns());
+        Assertions.assertEquals(0d, zero.degrees());
+        Assertions.assertEquals(0d, zero.radians());
 
-        Assertions.assertEquals(0.5 - small, nZero.apply(PlaneAngle.ofTurns(-0.5 - small)).toTurns(), eps);
-        Assertions.assertEquals(-0.5 + small, nZero.apply(PlaneAngle.ofTurns(0.5 + small)).toTurns(), eps);
+        Assertions.assertEquals(180, half.getValue());
+        Assertions.assertEquals(0.5, half.turns());
+        Assertions.assertEquals(180d, half.degrees());
+        Assertions.assertEquals(Math.PI, half.radians());
 
-        Assertions.assertEquals(0.0, nPi.apply(PlaneAngle.ofTurns(-tiny)).toTurns(), eps);
-        Assertions.assertEquals(tiny, nPi.apply(PlaneAngle.ofTurns(tiny)).toTurns(), eps);
+        Assertions.assertEquals(-180, minusHalf.getValue());
+        Assertions.assertEquals(-0.5, minusHalf.turns());
+        Assertions.assertEquals(-180d, minusHalf.degrees());
+        Assertions.assertEquals(-Math.PI, minusHalf.radians());
 
-        Assertions.assertEquals(-0.5, nZero.apply(PlaneAngle.ofTurns(-0.5 - tiny)).toTurns(), eps);
-        Assertions.assertEquals(-0.5, nZero.apply(PlaneAngle.ofTurns(0.5 + tiny)).toTurns(), eps);
+        Assertions.assertEquals(360, full.getValue());
+        Assertions.assertEquals(1, full.turns());
+        Assertions.assertEquals(360d, full.degrees());
+        Assertions.assertEquals(2 * Math.PI, full.radians());
     }
 
     @Test
-    void testNormalizeNumericalAccuracy() {
-        // arrange
-        final double aboveZero = Math.nextUp(0d);
-        final double belowZero = Math.nextDown(0d);
-        final double abovePi = Math.nextUp(Math.PI);
-        final double belowPi = Math.nextDown(Math.PI);
+    void testOfRadians() {
+        // act
+        final PlaneAngle.Radians zero = PlaneAngle.ofRadians(0);
+        final PlaneAngle.Radians half = PlaneAngle.ofRadians(Math.PI);
+        final PlaneAngle.Radians minusHalf = PlaneAngle.ofRadians(-Math.PI);
+        final PlaneAngle.Radians full = PlaneAngle.ofRadians(2 * Math.PI);
 
         // act/assert
-        assertNormalizeRadiansExact(aboveZero, aboveZero, 0d);
-        assertNormalizeRadiansExact(aboveZero, aboveZero, Math.PI);
+        Assertions.assertEquals(0d, zero.getValue());
+        Assertions.assertEquals(0d, zero.turns());
+        Assertions.assertEquals(0d, zero.degrees());
+        Assertions.assertEquals(0d, zero.radians());
 
-        assertNormalizeRadiansExact(belowZero, belowZero, 0d);
-        assertNormalizeRadiansExact(belowZero, belowZero, Math.PI);
+        Assertions.assertEquals(Math.PI, half.getValue());
+        Assertions.assertEquals(0.5, half.turns());
+        Assertions.assertEquals(180d, half.degrees());
+        Assertions.assertEquals(Math.PI, half.radians());
 
-        assertNormalizeRadiansExact(abovePi - PlaneAngleRadians.TWO_PI, abovePi, 0d);
-        assertNormalizeRadiansExact(abovePi, abovePi, Math.PI);
+        Assertions.assertEquals(-Math.PI, minusHalf.getValue());
+        Assertions.assertEquals(-0.5, minusHalf.turns());
+        Assertions.assertEquals(-180d, minusHalf.degrees());
+        Assertions.assertEquals(-Math.PI, minusHalf.radians());
 
-        assertNormalizeRadiansExact(belowPi, belowPi, 0d);
-        assertNormalizeRadiansExact(belowPi, belowPi, Math.PI);
-    }
-
-    private static void assertNormalizeRadiansExact(final double expected, final double radians, final double center) {
-        Assertions.assertEquals(expected,
-                PlaneAngle.normalizer(PlaneAngle.ofRadians(radians)).apply(PlaneAngle.ofRadians(center)).toRadians());
-    }
-
-    @Test
-    void testHashCode() {
-        // Test assumes that the internal representation is in "turns".
-        final double value = -123.456789;
-        final int expected = Double.valueOf(value).hashCode();
-        final int actual = PlaneAngle.ofTurns(value).hashCode();
-        Assertions.assertEquals(actual, expected);
+        Assertions.assertEquals(2 * Math.PI, full.getValue());
+        Assertions.assertEquals(1, full.turns());
+        Assertions.assertEquals(360d, full.degrees());
+        Assertions.assertEquals(2 * Math.PI, full.radians());
     }
 
     @Test
-    void testEquals() {
-        final double value = 12345.6789;
-        final PlaneAngle a = PlaneAngle.ofRadians(value);
-        Assertions.assertTrue(a.equals(a));
-        Assertions.assertTrue(a.equals(PlaneAngle.ofRadians(value)));
-        Assertions.assertFalse(a.equals(PlaneAngle.ofRadians(Math.nextUp(value))));
-        Assertions.assertFalse(a.equals(new Object()));
-        Assertions.assertFalse(a.equals(null));
-    }
+    public void t() {
+        double lower = Math.PI / 3;
+        double center = lower + Math.PI;
+        System.out.println(lower);
+        System.out.println(center - Math.PI);
 
-    @Test
-    void testZero() {
-        Assertions.assertEquals(0, PlaneAngle.ZERO.toRadians());
-    }
-    @Test
-    void testPi() {
-        Assertions.assertEquals(Math.PI, PlaneAngle.PI.toRadians());
+
     }
 }

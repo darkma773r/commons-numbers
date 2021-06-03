@@ -34,9 +34,9 @@ public final class PlaneAngleRadians {
     /** Value of \( 3\pi/2 \): {@value}. */
     public static final double THREE_PI_OVER_TWO = 3 * PI_OVER_TWO;
     /** Normalizes an angle to be in the range [-&pi;, &pi;). */
-    public static final Normalizer WITHIN_MINUS_PI_AND_PI = new Normalizer(PlaneAngle.ZERO);
+    public static final Normalizer WITHIN_MINUS_PI_AND_PI = new Normalizer(PlaneAngle_Old.ZERO);
     /** Normalize an angle to be in the range [0, 2&pi;). */
-    public static final Normalizer WITHIN_0_AND_2PI = new Normalizer(PlaneAngle.PI);
+    public static final Normalizer WITHIN_0_AND_2PI = new Normalizer(PlaneAngle_Old.PI);
 
     /** Utility class. */
     private PlaneAngleRadians() {}
@@ -46,13 +46,13 @@ public final class PlaneAngleRadians {
      */
     public static final class Normalizer implements DoubleUnaryOperator {
         /** Underlying normalizer. */
-        private final PlaneAngle.Normalizer normalizer;
+        private final PlaneAngle_Old.Normalizer normalizer;
 
         /**
          * @param center Center (in radians) of the desired interval.
          */
-        private Normalizer(PlaneAngle center) {
-            normalizer = PlaneAngle.normalizer(center);
+        private Normalizer(PlaneAngle_Old center) {
+            normalizer = PlaneAngle_Old.normalizer(center);
         }
 
         /**
@@ -62,7 +62,7 @@ public final class PlaneAngleRadians {
          */
         @Override
         public double applyAsDouble(double a) {
-            return normalizer.apply(PlaneAngle.ofRadians(a)).toRadians();
+            return normalizer.apply(PlaneAngle_Old.ofRadians(a)).toRadians();
         }
     }
 
@@ -73,6 +73,6 @@ public final class PlaneAngleRadians {
      * @return a {@link Normalizer} instance.
      */
     public static Normalizer normalizer(double center) {
-        return new Normalizer(PlaneAngle.ofRadians(center));
+        return new Normalizer(PlaneAngle_Old.ofRadians(center));
     }
 }
