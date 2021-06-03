@@ -28,20 +28,33 @@ package org.apache.commons.numbers.arrays;
  */
 public final class Norms {
 
-    /** Threshold for scaling small numbers. */
+    /** Threshold for scaling small numbers. This value is chosen such that doubles
+     * set to this value can be squared without underflow. Values less than this must
+     * be scaled up.
+     */
     private static final double SMALL_THRESH = 0x1.0p-500;
 
-    /** Threshold for scaling large numbers. */
-    private static final double LARGE_THRESH = 0x1.0p+500;
+    /** Threshold for scaling large numbers. This value is chosen such that 2^31 doubles
+     * set to this value can be squared and added without overflow. Values greater than
+     * this must be scaled down.
+     */
+    private static final double LARGE_THRESH = 0x1.0p+496;
 
-    /** Threshold for scaling up without risking overflow. */
-    private static final double SAFE_SCALE_UP_THRESH = 0x1.0p-200;
+    /** Threshold for scaling up a single value by {@link #SCALE_UP} without risking overflow
+     * when the value is squared.
+     */
+    private static final double SAFE_SCALE_UP_THRESH = 0x1.0p-100;
 
     /** Value used to scale down large numbers. */
     private static final double SCALE_DOWN = 0x1.0p-600;
 
     /** Value used to scale up small numbers. */
     private static final double SCALE_UP = 0x1.0p+600;
+
+    /** Threshold for the difference between the exponents of two Euclidean 2D input values
+     * where the larger value dominates the calculation.
+     */
+    private static final int EXP_DIFF_THRESHOLD_2D = 54;
 
     /** Utility class; no instantiation. */
     private Norms() {}
@@ -133,7 +146,15 @@ public final class Norms {
         final double xabs = Math.abs(x);
         final double yabs = Math.abs(y);
 
-        final double max = Math.max(xabs, yabs);
+        final double max;
+        final double min;
+        if (xabs > yabs) {
+            max = xabs;
+            min = yabs;
+        } else {
+            max = yabs;
+            min = xabs;
+        }
 
         // if the max is not finite, then one of the inputs must not have
         // been finite
@@ -142,6 +163,9 @@ public final class Norms {
                 return Double.NaN;
             }
             return Double.POSITIVE_INFINITY;
+        } else if (Math.getExponent(max) - Math.getExponent(min) > EXP_DIFF_THRESHOLD_2D) {
+            // value is completely dominated by max; just return max
+            return max;
         }
 
         // compute the scale and rescale values

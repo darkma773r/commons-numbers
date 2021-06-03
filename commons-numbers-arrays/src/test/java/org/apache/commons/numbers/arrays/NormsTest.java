@@ -127,17 +127,26 @@ class NormsTest {
 
         // act/assert
         checkScaledEuclideanNorm(ones, 1, fn);
-        checkScaledEuclideanNorm(ones, 0x1.0p500, fn);
-        checkScaledEuclideanNorm(ones, 0x1.0p501, fn);
-        checkScaledEuclideanNorm(ones, 0x1.0p-200, fn);
-        checkScaledEuclideanNorm(ones, 0x1.0p-201, fn);
+        checkScaledEuclideanNorm(ones, 0x1.0p496, fn);
+        checkScaledEuclideanNorm(ones, 0x1.0p497, fn);
+        checkScaledEuclideanNorm(ones, 0x1.0p-100, fn);
+        checkScaledEuclideanNorm(ones, 0x1.0p-101, fn);
         checkScaledEuclideanNorm(ones, 0x1.0p-500, fn);
         checkScaledEuclideanNorm(ones, 0x1.0p-501, fn);
 
 
         checkScaledEuclideanNorm(multiplesOfTen, 1, fn);
-        checkScaledEuclideanNorm(multiplesOfTen, 0x1.0p500, fn);
+        checkScaledEuclideanNorm(multiplesOfTen, 0x1.0p-100, fn);
+        checkScaledEuclideanNorm(multiplesOfTen, 0x1.0p-101, fn);
+        checkScaledEuclideanNorm(multiplesOfTen, 0x1.0p495, fn);
         checkScaledEuclideanNorm(multiplesOfTen, 0x1.0p-500, fn);
+    }
+
+    @Test
+    void testEuclidean_2d_dominantValue() {
+        // act/assert
+        Assertions.assertEquals(Math.PI, Norms.euclidean(-Math.PI, 0x1.0p-55));
+        Assertions.assertEquals(Math.PI, Norms.euclidean(0x1.0p-55, -Math.PI));
     }
 
     @Test
@@ -225,7 +234,8 @@ class NormsTest {
         Assertions.assertEquals(5 * Math.sqrt(2), Norms.euclidean(-3d, -4d, 5d));
         Assertions.assertEquals(Double.MIN_VALUE, Norms.euclidean(0d, 0d, Double.MIN_VALUE));
         Assertions.assertEquals(Double.MAX_VALUE, Norms.euclidean(Double.MAX_VALUE, 0d, 0d));
-        Assertions.assertEquals(Double.POSITIVE_INFINITY, Norms.euclidean(0d, Double.MAX_VALUE, Double.MAX_VALUE));
+        Assertions.assertEquals(Double.POSITIVE_INFINITY,
+                Norms.euclidean(Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE));
 
         Assertions.assertEquals(Math.sqrt(3), Norms.euclidean(1d, -1d, 1d));
 
@@ -250,15 +260,17 @@ class NormsTest {
 
         // act/assert
         checkScaledEuclideanNorm(ones, 1, fn);
-        checkScaledEuclideanNorm(ones, 0x1.0p500, fn);
-        checkScaledEuclideanNorm(ones, 0x1.0p501, fn);
-        checkScaledEuclideanNorm(ones, 0x1.0p-200, fn);
-        checkScaledEuclideanNorm(ones, 0x1.0p-201, fn);
+        checkScaledEuclideanNorm(ones, 0x1.0p496, fn);
+        checkScaledEuclideanNorm(ones, 0x1.0p497, fn);
+        checkScaledEuclideanNorm(ones, 0x1.0p-100, fn);
+        checkScaledEuclideanNorm(ones, 0x1.0p-101, fn);
         checkScaledEuclideanNorm(ones, 0x1.0p-500, fn);
         checkScaledEuclideanNorm(ones, 0x1.0p-501, fn);
 
         checkScaledEuclideanNorm(multiplesOfTen, 1, fn);
-        checkScaledEuclideanNorm(multiplesOfTen, 0x1.0p499, fn);
+        checkScaledEuclideanNorm(multiplesOfTen, 0x1.0p-100, fn);
+        checkScaledEuclideanNorm(multiplesOfTen, 0x1.0p-101, fn);
+        checkScaledEuclideanNorm(multiplesOfTen, 0x1.0p495, fn);
         checkScaledEuclideanNorm(multiplesOfTen, 0x1.0p-501, fn);
     }
 
@@ -306,8 +318,13 @@ class NormsTest {
         Assertions.assertEquals(Double.MIN_VALUE, Norms.euclidean(new double[] {0d, Double.MIN_VALUE}));
         Assertions.assertEquals(Double.MAX_VALUE, Norms.euclidean(new double[] {Double.MAX_VALUE, 0d}));
 
-        Assertions.assertEquals(Double.POSITIVE_INFINITY,
-                Norms.euclidean(new double[] {Double.MAX_VALUE, Double.MAX_VALUE}));
+        final double[] maxVec = new double[1000];
+        Arrays.fill(maxVec, Double.MAX_VALUE);
+        Assertions.assertEquals(Double.POSITIVE_INFINITY, Norms.euclidean(maxVec));
+
+        final double[] largeThreshVec = new double[1000];
+        Arrays.fill(largeThreshVec, 0x1.0p496);
+        Assertions.assertEquals(Math.sqrt(largeThreshVec.length) * largeThreshVec[0], Norms.euclidean(largeThreshVec));
 
         Assertions.assertEquals(Double.NaN, Norms.euclidean(new double[] {-2d, Double.NaN, 1d}));
         Assertions.assertEquals(Double.NaN,
@@ -328,13 +345,13 @@ class NormsTest {
 
         // act/assert
         checkScaledEuclideanNorm(ones, 1, Norms::euclidean);
-        checkScaledEuclideanNorm(ones, 0x1.0p500, Norms::euclidean);
-        checkScaledEuclideanNorm(ones, 0x1.0p501, Norms::euclidean);
+        checkScaledEuclideanNorm(ones, 0x1.0p496, Norms::euclidean);
+        checkScaledEuclideanNorm(ones, 0x1.0p497, Norms::euclidean);
         checkScaledEuclideanNorm(ones, 0x1.0p-500, Norms::euclidean);
         checkScaledEuclideanNorm(ones, 0x1.0p-501, Norms::euclidean);
 
         checkScaledEuclideanNorm(multiplesOfTen, 1, Norms::euclidean);
-        checkScaledEuclideanNorm(multiplesOfTen, 0x1.0p498, Norms::euclidean);
+        checkScaledEuclideanNorm(multiplesOfTen, 0x1.0p495, Norms::euclidean);
         checkScaledEuclideanNorm(multiplesOfTen, 0x1.0p-502, Norms::euclidean);
     }
 
